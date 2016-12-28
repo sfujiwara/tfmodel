@@ -1,5 +1,7 @@
 # tfmodel
 
+[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
+
 This module includes pre-trained models converted for [TensorFlow](https://www.tensorflow.org/).
 
 ## Requirements
@@ -20,4 +22,4 @@ python -m unittest discover -v tests
 ## License
 
 This module itself is released under MIT license.
-Note that weights of existing pre-trained models follow their licenses respectively.
+**Note that weights of existing pre-trained models follow their licenses respectively**.
