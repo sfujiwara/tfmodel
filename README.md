@@ -13,6 +13,8 @@ tfmodel requires nothing but TensorFlow.
 
 ### VGG 16
 
+See [README_VGG16.md](README_VGG16.md).
+
 ## Unit Test
 
 ```

@@ -6,8 +6,8 @@ import subprocess
 import tensorflow as tf
 from tensorflow.contrib import layers
 
-MODEL_URL1 = "https://github.com/sfujiwara/tfmodel/releases/download/v0.1/export.data-00000-of-00001"
-MODEL_URL2 = "https://github.com/sfujiwara/tfmodel/releases/download/v0.1/export.index"
+MODEL_URL1 = "https://github.com/sfujiwara/tfmodel/releases/download/v0.1/vgg16.data-00000-of-00001"
+MODEL_URL2 = "https://github.com/sfujiwara/tfmodel/releases/download/v0.1/vgg16.index"
 VGG_MEAN = [123.68, 116.779, 103.939]
 
 
@@ -53,4 +53,4 @@ class Vgg16:
         subprocess.call(["wget", "-nc", MODEL_URL1, "-P", save_dir])
         subprocess.call(["wget", "-nc", MODEL_URL2, "-P", save_dir])
         # Restore variables
-        saver.restore(session, "{}/.tfmodel/vgg16/export".format(os.environ["HOME"]))
+        saver.restore(session, "{}/.tfmodel/vgg16/vgg16".format(os.environ["HOME"]))
