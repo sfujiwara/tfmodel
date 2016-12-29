@@ -1,4 +1,4 @@
-# VGG16
+# VGG 16
 
 See [here](http://www.robots.ox.ac.uk/~vgg/research/very_deep/) for details.
 
