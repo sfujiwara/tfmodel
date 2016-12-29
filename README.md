@@ -10,6 +10,12 @@ This module includes pre-trained models converted for [TensorFlow](https://www.t
 tfmodel requires nothing but TensorFlow.
 Other libraries in [requirement.txt](requirements.txt) are required only for unit tests or examples.
 
+## Installation
+
+```
+pip install git+https://github.com/sfujiwara/tfmodel
+```
+
 ## Models
 
 ### VGG 16

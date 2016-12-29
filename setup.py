@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-from mdsvm import __license__, __author__, __version__
+from tfmodel import __license__, __author__, __version__
 
 setup(
     name="tfmodel",
