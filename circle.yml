@@ -1,0 +1,10 @@
+machine:
+  timezone: Asia/Tokyo
+
+dependencies:
+  pre:
+    - pip install -r requirements.txt
+
+test:
+  override:
+    - python -m unittest discover -v tests
