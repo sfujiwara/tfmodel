@@ -8,7 +8,7 @@ This module includes pre-trained models converted for [TensorFlow](https://www.t
 ## Requirements
 
 tfmodel requires nothing but TensorFlow.
-[SciPy](https://www.scipy.org/) and [Keras](https://github.com/fchollet/keras) are required only for unit test.
+Other libraries in [requirement.txt](requirements.txt) are required only for unit tests or examples.
 
 ## Models
 
