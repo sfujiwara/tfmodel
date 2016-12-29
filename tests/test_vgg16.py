@@ -23,7 +23,7 @@ class TestVgg16(unittest.TestCase):
             model_tf.build_graph(img_ph)
             saver = tf.train.Saver()
             with tf.Session() as sess:
-                model_tf.restore_variables(sess, saver)
+                model_tf.restore_variables(sess)
                 p_tf = sess.run(model_tf.prob, feed_dict={img_ph: img})[0]
         # Try VGG 16 model included in Keras
         model = VGG16(weights='imagenet', include_top=True)
