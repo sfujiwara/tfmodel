@@ -2,13 +2,22 @@
 
 import os
 import subprocess
+import tarfile
 
 import tensorflow as tf
-from tensorflow.contrib import layers
 
 MODEL_URL1 = "https://github.com/sfujiwara/tfmodel/releases/download/v0.1/vgg16.data-00000-of-00001"
 MODEL_URL2 = "https://github.com/sfujiwara/tfmodel/releases/download/v0.1/vgg16.index"
+MODEL_URL = "http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz"
 VGG_MEAN = [123.68, 116.779, 103.939]
+
+
+def _vgg_conv2d(inputs, filters):
+    n_kernels = inputs.get_shape()[3].value
+    w = tf.Variable(tf.truncated_normal([3, 3, n_kernels, filters], stddev=0.1), name="weights")
+    b = tf.Variable(tf.zeros([filters]), name="biases")
+    h = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(inputs, w, strides=[1, 1, 1, 1], padding="SAME"), b))
+    return h, w, b
 
 
 class Vgg16:
@@ -16,56 +25,99 @@ class Vgg16:
     def __init__(self):
         pass
 
-    def build_graph(self, img_tensor, trainable=True):
-        # with tf.name_scope('preprocess') as scope:
-        #     mean = tf.constant([123.68, 116.779, 103.939], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
-        #     img_ph = img_ph - mean
-        var_list = []
-        self.conv1_1 = layers.convolution2d(inputs=img_tensor, num_outputs=64, kernel_size=3, padding="SAME", scope="conv1_1", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv1_1"))
-        self.conv1_2 = layers.convolution2d(inputs=self.conv1_1, num_outputs=64, kernel_size=3, padding="SAME", scope="conv1_2", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv1_2"))
-        self.pool1 = layers.max_pool2d(self.conv1_2, kernel_size=[2, 2], stride=[2, 2], padding="SAME", scope="pool1")
-        self.conv2_1 = layers.convolution2d(inputs=self.pool1, num_outputs=128, kernel_size=3, padding="SAME", scope="conv2_1", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv2_1"))
-        self.conv2_2 = layers.convolution2d(inputs=self.conv2_1, num_outputs=128, kernel_size=3, padding="SAME", scope="conv2_2", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv2_2"))
-        self.pool2 = layers.max_pool2d(self.conv2_2, kernel_size=[2, 2], stride=[2, 2], padding="SAME", scope="pool2")
-        self.conv3_1 = layers.convolution2d(inputs=self.pool2, num_outputs=256, kernel_size=3, padding="SAME", scope="conv3_1", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv3_1"))
-        self.conv3_2 = layers.convolution2d(inputs=self.conv3_1, num_outputs=256, kernel_size=3, padding="SAME", scope="conv3_2", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv3_2"))
-        self.conv3_3 = layers.convolution2d(inputs=self.conv3_2, num_outputs=256, kernel_size=3, padding="SAME", scope="conv3_3", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv3_3"))
-        self.pool3 = layers.max_pool2d(self.conv3_3, kernel_size=[2, 2], stride=[2, 2], padding="SAME", scope="pool3")
-        self.conv4_1 = layers.convolution2d(inputs=self.pool3, num_outputs=512, kernel_size=3, padding="SAME", scope="conv4_1", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv4_1"))
-        self.conv4_2 = layers.convolution2d(inputs=self.conv4_1, num_outputs=512, kernel_size=3, padding="SAME", scope="conv4_2", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv4_2"))
-        self.conv4_3 = layers.convolution2d(inputs=self.conv4_2, num_outputs=512, kernel_size=3, padding="SAME", scope="conv4_3", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv4_3"))
-        self.pool4 = layers.max_pool2d(self.conv4_3, kernel_size=[2, 2], stride=[2, 2], padding="SAME", scope="pool4")
-        self.conv5_1 = layers.convolution2d(inputs=self.pool4, num_outputs=512, kernel_size=3, padding="SAME", scope="conv5_1", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv5_1"))
-        self.conv5_2 = layers.convolution2d(inputs=self.conv5_1, num_outputs=512, kernel_size=3, padding="SAME", scope="conv5_2", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv5_2"))
-        self.conv5_3 = layers.convolution2d(inputs=self.conv5_2, num_outputs=512, kernel_size=3, padding="SAME", scope="conv5_3", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "conv5_3"))
-        self.pool5 = layers.max_pool2d(self.conv5_3, kernel_size=[2, 2], stride=[2, 2], padding="SAME", scope="pool5")
-        self.fc6 = layers.fully_connected(inputs=layers.flatten(self.pool5), num_outputs=4096, scope="fc6", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "fc6"))
-        self.fc7 = layers.fully_connected(inputs=self.fc6, num_outputs=4096, scope="fc7", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "fc7"))
-        self.fc8 = layers.fully_connected(inputs=self.fc7, num_outputs=1000, activation_fn=None, scope="fc8", trainable=trainable)
-        var_list.extend(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, "fc8"))
+    def build_graph(self, img_tensor):
+        # Convolution layers 1
+        with tf.name_scope("conv1"):
+            h_conv1_1, w_conv1_1, b_conv1_1 = _vgg_conv2d(img_tensor, filters=64)
+            h_conv1_2, w_conv1_2, b_conv1_2 = _vgg_conv2d(h_conv1_1, filters=64)
+        # Pooling 1
+        pool1 = tf.nn.max_pool(h_conv1_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool1")
+        # Convolution layers 2
+        with tf.name_scope("conv2"):
+            h_conv2_1, w_conv2_1, b_conv2_1 = _vgg_conv2d(pool1, filters=128)
+            h_conv2_2, w_conv2_2, b_conv2_2 = _vgg_conv2d(h_conv2_1, filters=128)
+        # Pooling 2
+        pool2 = tf.nn.max_pool(h_conv2_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool2")
+        # Convolution layers 3
+        with tf.name_scope("conv3"):
+            h_conv3_1, w_conv3_1, b_conv3_1 = _vgg_conv2d(pool2, filters=256)
+            h_conv3_2, w_conv3_2, b_conv3_2 = _vgg_conv2d(h_conv3_1, filters=256)
+            h_conv3_3, w_conv3_3, b_conv3_3 = _vgg_conv2d(h_conv3_2, filters=256)
+        # Pooling 3
+        pool3 = tf.nn.max_pool(h_conv3_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool3")
+        # Convolution 4
+        with tf.name_scope("conv4"):
+            h_conv4_1, w_conv4_1, b_conv4_1 = _vgg_conv2d(pool3, filters=512)
+            h_conv4_2, w_conv4_2, b_conv4_2 = _vgg_conv2d(h_conv4_1, filters=512)
+            h_conv4_3, w_conv4_3, b_conv4_3 = _vgg_conv2d(h_conv4_2, filters=512)
+        # Pooling 4
+        pool4 = tf.nn.max_pool(h_conv4_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool4")
+        # Convolution 5
+        with tf.name_scope("conv5"):
+            h_conv5_1, w_conv5_1, b_conv5_1 = _vgg_conv2d(pool4, filters=512)
+            h_conv5_2, w_conv5_2, b_conv5_2 = _vgg_conv2d(h_conv5_1, filters=512)
+            h_conv5_3, w_conv5_3, b_conv5_3 = _vgg_conv2d(h_conv5_2, filters=512)
+        # Pooling 5
+        pool5 = tf.nn.max_pool(h_conv5_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool5")
+        # Fully connected 6
+        with tf.name_scope("fc6"):
+            w_fc6 = tf.Variable(tf.truncated_normal([7, 7, 512, 4096], stddev=0.1), name="weights")
+            b_fc6 = tf.Variable(tf.zeros([4096]), name="biases")
+            h_fc6 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(pool5, w_fc6, strides=[1, 1, 1, 1], padding="VALID"), b_fc6))
+        # Fully connected 7
+        with tf.name_scope("fc7"):
+            w_fc7 = tf.Variable(tf.truncated_normal([1, 1, 4096, 4096], stddev=0.1), name="weights")
+            b_fc7 = tf.Variable(tf.zeros([4096]), name="biases")
+            h_fc7 = tf.nn.relu(tf.nn.bias_add(tf.nn.conv2d(h_fc6, w_fc7, strides=[1, 1, 1, 1], padding="SAME"), b_fc7))
+        # Fully connected 8
+        with tf.name_scope("fc8"):
+            w_fc8 = tf.Variable(tf.truncated_normal([1, 1, 4096, 1000], stddev=0.1), name="weights")
+            b_fc8 = tf.Variable(tf.zeros([1000]), name="biases")
+            h_fc8 = tf.nn.bias_add(tf.nn.conv2d(h_fc7, w_fc8, strides=[1, 1, 1, 1], padding="SAME"), b_fc8)
         with tf.name_scope("prob"):
-            self.prob = tf.nn.softmax(self.fc8)
-        self.saver = tf.train.Saver(var_list=var_list)
+            self.logits = h_fc8
+        self.saver = tf.train.Saver(
+            var_list={
+                "vgg_16/conv1/conv1_1/weights": w_conv1_1,
+                "vgg_16/conv1/conv1_1/biases": b_conv1_1,
+                "vgg_16/conv1/conv1_2/weights": w_conv1_2,
+                "vgg_16/conv1/conv1_2/biases": b_conv1_2,
+                "vgg_16/conv2/conv2_1/weights": w_conv2_1,
+                "vgg_16/conv2/conv2_1/biases": b_conv2_1,
+                "vgg_16/conv2/conv2_2/weights": w_conv2_2,
+                "vgg_16/conv2/conv2_2/biases": b_conv2_2,
+                "vgg_16/conv3/conv3_1/weights": w_conv3_1,
+                "vgg_16/conv3/conv3_1/biases": b_conv3_1,
+                "vgg_16/conv3/conv3_2/weights": w_conv3_2,
+                "vgg_16/conv3/conv3_2/biases": b_conv3_2,
+                "vgg_16/conv3/conv3_3/weights": w_conv3_3,
+                "vgg_16/conv3/conv3_3/biases": b_conv3_3,
+                "vgg_16/conv4/conv4_1/weights": w_conv4_1,
+                "vgg_16/conv4/conv4_1/biases": b_conv4_1,
+                "vgg_16/conv4/conv4_2/weights": w_conv4_2,
+                "vgg_16/conv4/conv4_2/biases": b_conv4_2,
+                "vgg_16/conv4/conv4_3/weights": w_conv4_3,
+                "vgg_16/conv4/conv4_3/biases": b_conv4_3,
+                "vgg_16/conv5/conv5_1/weights": w_conv5_1,
+                "vgg_16/conv5/conv5_1/biases": b_conv5_1,
+                "vgg_16/conv5/conv5_2/weights": w_conv5_2,
+                "vgg_16/conv5/conv5_2/biases": b_conv5_2,
+                "vgg_16/conv5/conv5_3/weights": w_conv5_3,
+                "vgg_16/conv5/conv5_3/biases": b_conv5_3,
+                "vgg_16/fc6/weights": w_fc6,
+                "vgg_16/fc6/biases": b_fc6,
+                "vgg_16/fc7/weights": w_fc7,
+                "vgg_16/fc7/biases": b_fc7,
+                "vgg_16/fc8/weights": w_fc8,
+                "vgg_16/fc8/biases": b_fc8,
+            }
+        )
 
     def restore_variables(self, session):
         # Download weights
         save_dir = os.path.join(os.environ["HOME"], ".tfmodel", "vgg16")
-        subprocess.call(["wget", "-nc", MODEL_URL1, "-P", save_dir])
-        subprocess.call(["wget", "-nc", MODEL_URL2, "-P", save_dir])
-        # Restore variables
-        self.saver.restore(session, "{}/.tfmodel/vgg16/vgg16".format(os.environ["HOME"]))
+        checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
+        subprocess.call(["wget", "-nc", MODEL_URL, "-P", save_dir])
+        with tarfile.open(os.path.join(save_dir, "vgg_16_2016_08_28.tar.gz")) as f:
+            f.extractall(path=save_dir)
+        self.saver.restore(session, checkpoint_path)
