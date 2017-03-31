@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os
-import subprocess
-import tarfile
-
+import util
 import tensorflow as tf
 
-MODEL_URL1 = "https://github.com/sfujiwara/tfmodel/releases/download/v0.1/vgg16.data-00000-of-00001"
-MODEL_URL2 = "https://github.com/sfujiwara/tfmodel/releases/download/v0.1/vgg16.index"
 MODEL_URL = "http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz"
 VGG_MEAN = [123.68, 116.779, 103.939]
 
@@ -129,8 +125,6 @@ class Vgg16:
     def restore_variables(self, session):
         # Download weights
         save_dir = os.path.join(os.environ["HOME"], ".tfmodel", "vgg16")
+        util.maybe_download_and_extract(dest_directory=save_dir, data_url=MODEL_URL)
         checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
-        subprocess.call(["wget", "-nc", MODEL_URL, "-P", save_dir])
-        with tarfile.open(os.path.join(save_dir, "vgg_16_2016_08_28.tar.gz")) as f:
-            f.extractall(path=save_dir)
         self.saver.restore(session, checkpoint_path)

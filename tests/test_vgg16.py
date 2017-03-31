@@ -9,7 +9,7 @@ import numpy as np
 from scipy.misc import imread, imresize
 from keras.applications.vgg16 import VGG16
 
-from tfmodel import vgg16
+from tfmodel import vgg
 
 
 class TestVgg16(unittest.TestCase):
@@ -20,7 +20,7 @@ class TestVgg16(unittest.TestCase):
         img = np.array([imresize(imread(img_path, mode="RGB"), [224, 224])], dtype=np.float32)
         # Try VGG 16 model converted for TensorFlow
         with tf.Graph().as_default() as g:
-            model_tf = vgg16.Vgg16()
+            model_tf = vgg.Vgg16()
             img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
             model_tf.build_graph(img_ph)
             with tf.Session() as sess:
@@ -37,7 +37,7 @@ class TestVgg16(unittest.TestCase):
         img = np.array([imresize(imread(img_path, mode="RGB"), [224, 224])], dtype=np.float32)
         # Try VGG 16 model converted for TensorFlow
         with tf.Graph().as_default() as g:
-            model_tf = vgg16.Vgg16()
+            model_tf = vgg.Vgg16()
             img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
             model_tf.build_graph(img_ph)
             tf.summary.FileWriter(logdir="summary/tfmodel", graph=g)
