@@ -20,11 +20,10 @@ class TestVgg16(unittest.TestCase):
         img = np.array([imresize(imread(img_path, mode="RGB"), [224, 224])], dtype=np.float32)
         # Try VGG 16 model converted for TensorFlow
         with tf.Graph().as_default() as g:
-            model_tf = vgg.Vgg16()
             img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
-            model_tf.build_graph(img_ph)
+            model_tf = vgg.Vgg16(img_ph)
             with tf.Session() as sess:
-                model_tf.restore_variables(sess)
+                model_tf.restore_pretrained_variables(sess)
                 p_tf = sess.run(tf.nn.softmax(model_tf.logits), feed_dict={img_ph: img})[0]
         # Try VGG 16 model included in Keras
         model = VGG16(weights='imagenet', include_top=True)
@@ -37,12 +36,11 @@ class TestVgg16(unittest.TestCase):
         img = np.array([imresize(imread(img_path, mode="RGB"), [224, 224])], dtype=np.float32)
         # Try VGG 16 model converted for TensorFlow
         with tf.Graph().as_default() as g:
-            model_tf = vgg.Vgg16()
             img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
-            model_tf.build_graph(img_ph)
+            model_tf = vgg.Vgg16(img_ph)
             tf.summary.FileWriter(logdir="summary/tfmodel", graph=g)
             with tf.Session() as sess:
-                model_tf.restore_variables(sess)
+                model_tf.restore_pretrained_variables(sess)
                 logits_tf = sess.run(model_tf.logits, feed_dict={img_ph: img})[0]
         # Try VGG 16 model included in TF-Slim
         with tf.Graph().as_default() as g:

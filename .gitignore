@@ -3,6 +3,5 @@
 *.pyc
 summary
 
-inception.py
 sandbox.py
 models
