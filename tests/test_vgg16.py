@@ -9,7 +9,7 @@ import numpy as np
 from scipy.misc import imread, imresize
 from keras.applications.vgg16 import VGG16
 
-from tfmodel import vgg
+import tfmodel
 
 
 class TestVgg16(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestVgg16(unittest.TestCase):
         # Try VGG 16 model converted for TensorFlow
         with tf.Graph().as_default() as g:
             img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
-            model_tf = vgg.Vgg16(img_ph)
+            model_tf = tfmodel.vgg.Vgg16(img_ph)
             with tf.Session() as sess:
                 model_tf.restore_pretrained_variables(sess)
                 p_tf = sess.run(tf.nn.softmax(model_tf.logits), feed_dict={img_ph: img})[0]
@@ -37,7 +37,7 @@ class TestVgg16(unittest.TestCase):
         # Try VGG 16 model converted for TensorFlow
         with tf.Graph().as_default() as g:
             img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
-            model_tf = vgg.Vgg16(img_ph)
+            model_tf = tfmodel.vgg.Vgg16(img_ph)
             tf.summary.FileWriter(logdir="summary/tfmodel", graph=g)
             with tf.Session() as sess:
                 model_tf.restore_pretrained_variables(sess)
