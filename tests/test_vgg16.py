@@ -16,8 +16,9 @@ class TestVgg16(unittest.TestCase):
 
     def test_vgg16_with_keras(self):
         # Load sample image
-        img_path = "img/tensorflow_logo.png"
-        img = np.array([imresize(imread(img_path, mode="RGB"), [224, 224])], dtype=np.float32)
+        # img_path = "img/tensorflow_logo.png"
+        # img = np.array([imresize(imread(img_path, mode="RGB"), [224, 224])], dtype=np.float32)
+        img = np.random.normal(size=[1, 224, 224, 3])
         # Try VGG 16 model converted for TensorFlow
         with tf.Graph().as_default() as g:
             img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
@@ -32,8 +33,9 @@ class TestVgg16(unittest.TestCase):
 
     def test_vgg16_with_tfslim(self):
         # Load sample image
-        img_path = "img/tensorflow_logo.png"
-        img = np.array([imresize(imread(img_path, mode="RGB"), [224, 224])], dtype=np.float32)
+        # img_path = "img/tensorflow_logo.png"
+        # img = np.array([imresize(imread(img_path, mode="RGB"), [224, 224])], dtype=np.float32)
+        img = np.random.normal(size=[1, 224, 224, 3])
         # Try VGG 16 model converted for TensorFlow
         with tf.Graph().as_default() as g:
             img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
