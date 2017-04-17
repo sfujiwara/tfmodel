@@ -5,6 +5,8 @@ dependencies:
   pre:
     - pip install -U pip
     - pip install -r requirements.txt
+    - apt-get install google-perftools
+    - export LD_PRELOAD="/usr/lib/libtcmalloc.so.4"
 
 test:
   override:
