@@ -3,5 +3,6 @@
 *.pyc
 summary
 
-sandbox.py
+examples/sandbox/sandbox.py
+sandbox
 models
