@@ -26,7 +26,7 @@ service google-fluentd restart
 
 apt-get -y install python-pip
 pip install -U pip
-pip install tensorflow
+pip install tensorflow==1.1.0rc0
 pip install Pillow
 pip install scipy
 

@@ -12,7 +12,7 @@ import tfmodel
 
 CONTENT_WEIGHT = 1.
 STYLE_WEIGHT = 1.
-LEARNING_RATE = 10.
+LEARNING_RATE = 1.
 
 content_img = np.array([imresize(imread("img/tensorflow_logo.png", mode="RGB"), [224, 224])], dtype=np.float32)
 style_img = np.array([imresize(imread("img/chouju_sumou.jpg", mode="RGB"), [224, 224])], dtype=np.float32)
