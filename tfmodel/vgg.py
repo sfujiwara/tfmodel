@@ -139,7 +139,7 @@ class Vgg16:
                 }
             )
         # Download weights
-        save_dir = os.path.join(os.environ.get("HOME"), ".tfmodel", "vgg16")
+        save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
         util.maybe_download_and_extract(dest_directory=save_dir, data_url=MODEL_URL)
         checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
         self.saver.restore(session, checkpoint_path)
