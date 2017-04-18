@@ -12,7 +12,7 @@ import tfmodel
 
 CONTENT_WEIGHT = 1.
 STYLE_WEIGHT = 1.
-LEARNING_RATE = 1e1
+LEARNING_RATE = 10.
 
 content_img = np.array([imresize(imread("img/tensorflow_logo.png", mode="RGB"), [224, 224])], dtype=np.float32)
 style_img = np.array([imresize(imread("img/chouju_sumou.jpg", mode="RGB"), [224, 224])], dtype=np.float32)
@@ -29,7 +29,7 @@ with tf.Graph().as_default() as g1:
 
 with tf.Graph().as_default() as g2:
     img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3]))
-    tf.summary.image("result", img_tensor, max_outputs=10)
+    tf.summary.image("result", img_tensor, max_outputs=100)
     net = tfmodel.vgg.Vgg16(img_tensor=img_tensor, trainable=False)
     content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
     style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
@@ -59,7 +59,7 @@ with tf.Graph().as_default() as g2:
         tf.summary.scalar("style_loss", style_loss)
     with tf.name_scope("total_loss"):
         total_loss = CONTENT_WEIGHT * content_loss + STYLE_WEIGHT * style_loss
-        total_loss = tf.summary.scalar("total_loss", total_loss)
+        tf.summary.scalar("total_loss", total_loss)
     optim = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(total_loss)
     init_op = tf.global_variables_initializer()
     summary_writer = tf.summary.FileWriter("summary/neuralstyle", graph=g2)
