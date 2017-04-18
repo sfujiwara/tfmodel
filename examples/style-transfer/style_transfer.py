@@ -16,10 +16,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--content", type=str, default="img/tensorflow_logo.png")
 parser.add_argument("--style", type=str, default="img/chouju_sumou.jpg")
 parser.add_argument("--output_dir", type=str, default="outputs")
-parser.add_argument("--content_weight", type=float, default=1.)
-parser.add_argument("--style_weight", type=float, default=1.)
+parser.add_argument("--content_weight", type=float, default=5e0)
+parser.add_argument("--style_weight", type=float, default=5e2)
 parser.add_argument("--iterations", type=int, default=1000)
-parser.add_argument("--learning_rate", type=float, default=1e0)
+parser.add_argument("--learning_rate", type=float, default=1e1)
 args, unknown_args = parser.parse_known_args()
 
 CONTENT = args.content
@@ -74,10 +74,10 @@ with tf.Graph().as_default() as g2:
             feats = tf.reshape(style_layer_tensors[i], (-1, number))
             gram = tf.matmul(tf.transpose(feats), feats) / size
             style_losses.append(tf.nn.l2_loss(gram - style_gram) / size)
-        style_loss = tf.reduce_sum(style_losses)
+        style_loss = tf.reduce_sum(style_losses) * tf.constant(STYLE_WEIGHT, name="style_weight")
         tf.summary.scalar("style_loss", style_loss)
     with tf.name_scope("total_loss"):
-        total_loss = CONTENT_WEIGHT * content_loss + STYLE_WEIGHT * style_loss
+        total_loss = content_loss + style_loss
         tf.summary.scalar("total_loss", total_loss)
     optim = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(total_loss)
     init_op = tf.global_variables_initializer()
