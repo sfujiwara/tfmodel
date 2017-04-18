@@ -45,20 +45,19 @@ with tf.Graph().as_default() as g1:
         style_layers = sess.run(style_layer_tensors, feed_dict={img_ph: style_img})
 
 with tf.Graph().as_default() as g2:
-    img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3], mean=128.))
+    img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3], stddev=0.256))
     tf.summary.image("generated_image", img_tensor, max_outputs=100)
     tf.summary.image("content", content_img)
     tf.summary.image("style", style_img)
     net = tfmodel.vgg.Vgg16(img_tensor=img_tensor, trainable=False)
-    content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
+    # content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
+    content_layer_tensors = [net.h_conv4_2]
     style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
     # Define content loss
     with tf.name_scope("content_loss"):
         content_losses = []
         for i in range(len(content_layers)):
-            content_losses.append(
-                tf.reduce_mean(tf.squared_difference(content_layer_tensors[i], content_layers[i]))
-            )
+            content_losses.append(tf.reduce_mean(tf.squared_difference(content_layer_tensors[i], content_layers[i])))
         content_loss = tf.reduce_sum(content_losses) * tf.constant(CONTENT_WEIGHT, name="content_weight")
         tf.summary.scalar("content_loss", content_loss)
     # Define style loss
@@ -79,7 +78,9 @@ with tf.Graph().as_default() as g2:
     with tf.name_scope("total_loss"):
         total_loss = content_loss + style_loss
         tf.summary.scalar("total_loss", total_loss)
-    optim = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(total_loss)
+    optim = tf.train.AdamOptimizer(
+        learning_rate=LEARNING_RATE, beta1=0.9, beta2=0.999, epsilon=1e-8
+    ).minimize(total_loss)
     init_op = tf.global_variables_initializer()
     summary_writer = tf.summary.FileWriter("summary/neuralstyle", graph=g2)
     merged = tf.summary.merge_all()
