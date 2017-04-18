@@ -20,7 +20,8 @@ cd examples/style-transfer
 ### Run on Local
 
 ```
-python style_transfer.py
+python style_transfer.py \
+  --learning_rate 1.0 \
 ```
 
 ### Run on Google Compute Engine

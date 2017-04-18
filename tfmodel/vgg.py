@@ -29,6 +29,9 @@ class Vgg16:
         self._build_graph(img_tensor, reuse, trainable=trainable)
 
     def _build_graph(self, img_tensor, reuse, trainable):
+        # Preprocessing
+        with tf.name_scope("preprocessing"):
+            img_tensor = img_tensor - tf.constant(VGG_MEAN, name="vgg_mean")
         # Convolution layers 1
         with tf.variable_scope("conv1", reuse=reuse):
             with tf.variable_scope("conv1_1"):

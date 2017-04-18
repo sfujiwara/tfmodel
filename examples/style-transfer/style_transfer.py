@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import argparse
 import os
 import sys
 import numpy as np
@@ -10,11 +11,26 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 import tfmodel
 
-CONTENT_WEIGHT = 1.
-STYLE_WEIGHT = 1.
-LEARNING_RATE = 1.
+# Parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("--content", type=str, default="img/tensorflow_logo.png")
+parser.add_argument("--style", type=str, default="img/chouju_sumou.jpg")
+parser.add_argument("--output_dir", type=str, default="outputs")
+parser.add_argument("--content_weight", type=float, default=1.)
+parser.add_argument("--style_weight", type=float, default=1.)
+parser.add_argument("--iterations", type=int, default=1000)
+parser.add_argument("--learning_rate", type=float, default=1e0)
+args, unknown_args = parser.parse_known_args()
 
-content_img = np.array([imresize(imread("img/tensorflow_logo.png", mode="RGB"), [224, 224])], dtype=np.float32)
+CONTENT = args.content
+STYLE = args.style
+OUTPUT_DIR = args.output_dir
+CONTENT_WEIGHT = args.content_weight
+STYLE_WEIGHT = args.style_weight
+LEARNING_RATE = args.learning_rate
+ITERATIONS = args.iterations
+
+content_img = np.array([imresize(imread(CONTENT, mode="RGB"), [224, 224])], dtype=np.float32)
 content_img[content_img == 0.] = 254.
 style_img = np.array([imresize(imread("img/chouju_sumou.jpg", mode="RGB"), [224, 224])], dtype=np.float32)
 
@@ -43,7 +59,7 @@ with tf.Graph().as_default() as g2:
             content_losses.append(
                 tf.reduce_mean(tf.squared_difference(content_layer_tensors[i], content_layers[i]))
             )
-        content_loss = tf.reduce_sum(content_losses)
+        content_loss = tf.reduce_sum(content_losses) * tf.constant(CONTENT_WEIGHT, name="content_weight")
         tf.summary.scalar("content_loss", content_loss)
     # Define style loss
     with tf.name_scope("style_loss"):
@@ -72,9 +88,11 @@ with tf.Graph().as_default() as g2:
         net.restore_pretrained_variables(session=sess)
         res = sess.run(content_layer_tensors)
         var = sess.run(img_tensor)
-        for i in range(3000):
+        for i in range(ITERATIONS):
             if i % 20 == 0:
-                imsave("output-{}.jpg".format(i), sess.run(img_tensor)[0])
+                if not os.path.exists(OUTPUT_DIR):
+                    os.mkdir(OUTPUT_DIR)
+                imsave(os.path.join(OUTPUT_DIR, "output-{}.jpg".format(i)), sess.run(img_tensor)[0])
                 summary = sess.run(merged)
                 summary_writer.add_summary(summary, i)
             _, t, c, s = sess.run([optim, total_loss, content_loss, style_loss])
