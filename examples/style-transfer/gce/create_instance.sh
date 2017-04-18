@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-INSTANCE_NAME="style-transfer"
+INSTANCE_NAME="style-transfer-`date '+%Y%m%d%H%M%S'`"
 PROJECT_ID=`gcloud config list project --format "value(core.project)"`
 
 # Create Compute Engine instance
