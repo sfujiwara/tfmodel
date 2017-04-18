@@ -37,7 +37,8 @@ style_img = np.array([imresize(imread("img/chouju_sumou.jpg", mode="RGB"), [224,
 with tf.Graph().as_default() as g1:
     img_ph = tf.placeholder(tf.float32, [1, 224, 224, 3])
     net = tfmodel.vgg.Vgg16(img_tensor=img_ph)
-    content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
+    # content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
+    content_layer_tensors = [net.h_conv4_2]
     style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
     with tf.Session() as sess:
         net.restore_pretrained_variables(session=sess)
@@ -53,6 +54,7 @@ with tf.Graph().as_default() as g2:
     # content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
     content_layer_tensors = [net.h_conv4_2]
     style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
+
     # Define content loss
     with tf.name_scope("content_loss"):
         content_losses = []
@@ -60,6 +62,7 @@ with tf.Graph().as_default() as g2:
             content_losses.append(tf.reduce_mean(tf.squared_difference(content_layer_tensors[i], content_layers[i])))
         content_loss = tf.reduce_sum(content_losses) * tf.constant(CONTENT_WEIGHT, name="content_weight")
         tf.summary.scalar("content_loss", content_loss)
+
     # Define style loss
     with tf.name_scope("style_loss"):
         style_losses = []
@@ -75,6 +78,7 @@ with tf.Graph().as_default() as g2:
             style_losses.append(tf.nn.l2_loss(gram - style_gram) / size)
         style_loss = tf.reduce_sum(style_losses) * tf.constant(STYLE_WEIGHT, name="style_weight")
         tf.summary.scalar("style_loss", style_loss)
+
     with tf.name_scope("total_loss"):
         total_loss = content_loss + style_loss
         tf.summary.scalar("total_loss", total_loss)
