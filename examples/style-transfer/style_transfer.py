@@ -29,7 +29,7 @@ with tf.Graph().as_default() as g1:
         style_layers = sess.run(style_layer_tensors, feed_dict={img_ph: style_img})
 
 with tf.Graph().as_default() as g2:
-    img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3]))
+    img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3], mean=128.))
     tf.summary.image("generated_image", img_tensor, max_outputs=100)
     tf.summary.image("content", content_img)
     tf.summary.image("style", style_img)
