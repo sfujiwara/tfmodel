@@ -139,6 +139,8 @@ class Vgg16:
                 }
             )
         # Download weights
+        if "HOME" not in os.environ:
+            os.environ["HOME"] = ""
         save_dir = os.path.join(os.environ["HOME"], ".tfmodel", "vgg16")
         util.maybe_download_and_extract(dest_directory=save_dir, data_url=MODEL_URL)
         checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")

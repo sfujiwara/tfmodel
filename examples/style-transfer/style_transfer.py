@@ -11,8 +11,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 import tfmodel
 
 CONTENT_WEIGHT = 1.
-STYLE_WEIGHT = 100.
-LEARNING_RATE = 1.
+STYLE_WEIGHT = 1.
+LEARNING_RATE = 1e1
 
 content_img = np.array([imresize(imread("img/tensorflow_logo.png", mode="RGB"), [224, 224])], dtype=np.float32)
 style_img = np.array([imresize(imread("img/chouju_sumou.jpg", mode="RGB"), [224, 224])], dtype=np.float32)
@@ -29,6 +29,7 @@ with tf.Graph().as_default() as g1:
 
 with tf.Graph().as_default() as g2:
     img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3]))
+    tf.summary.image("result", img_tensor, max_outputs=10)
     net = tfmodel.vgg.Vgg16(img_tensor=img_tensor, trainable=False)
     content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
     style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
@@ -40,6 +41,7 @@ with tf.Graph().as_default() as g2:
                 tf.reduce_mean(tf.squared_difference(content_layer_tensors[i], content_layers[i]))
             )
         content_loss = tf.reduce_sum(content_losses)
+        tf.summary.scalar("content_loss", content_loss)
     # Define style loss
     with tf.name_scope("style_loss"):
         style_losses = []
@@ -54,11 +56,14 @@ with tf.Graph().as_default() as g2:
             gram = tf.matmul(tf.transpose(feats), feats) / size
             style_losses.append(tf.nn.l2_loss(gram - style_gram) / size)
         style_loss = tf.reduce_sum(style_losses)
+        tf.summary.scalar("style_loss", style_loss)
     with tf.name_scope("total_loss"):
         total_loss = CONTENT_WEIGHT * content_loss + STYLE_WEIGHT * style_loss
+        total_loss = tf.summary.scalar("total_loss", total_loss)
     optim = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(total_loss)
     init_op = tf.global_variables_initializer()
-    tf.summary.FileWriter("summary/neuralstyle", graph=g2)
+    summary_writer = tf.summary.FileWriter("summary/neuralstyle", graph=g2)
+    merged = tf.summary.merge_all()
     with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
         sess.run(init_op)
         net.restore_pretrained_variables(session=sess)
@@ -67,6 +72,8 @@ with tf.Graph().as_default() as g2:
         for i in range(1000):
             if i % 10 == 0:
                 imsave("output-{}.jpg".format(i), sess.run(img_tensor)[0])
+                summary = sess.run(merged)
+                summary_writer.add_summary(summary, i)
             _, t, c, s = sess.run([optim, total_loss, content_loss, style_loss])
             print("total loss: {}".format(t))
             print("content loss: {}".format(c))
