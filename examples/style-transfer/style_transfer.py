@@ -15,6 +15,7 @@ STYLE_WEIGHT = 1.
 LEARNING_RATE = 1.
 
 content_img = np.array([imresize(imread("img/tensorflow_logo.png", mode="RGB"), [224, 224])], dtype=np.float32)
+content_img[content_img == 0.] = 254.
 style_img = np.array([imresize(imread("img/chouju_sumou.jpg", mode="RGB"), [224, 224])], dtype=np.float32)
 
 with tf.Graph().as_default() as g1:
@@ -29,7 +30,9 @@ with tf.Graph().as_default() as g1:
 
 with tf.Graph().as_default() as g2:
     img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3]))
-    tf.summary.image("result", img_tensor, max_outputs=100)
+    tf.summary.image("generated_image", img_tensor, max_outputs=100)
+    tf.summary.image("content", content_img)
+    tf.summary.image("style", style_img)
     net = tfmodel.vgg.Vgg16(img_tensor=img_tensor, trainable=False)
     content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
     style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
@@ -69,8 +72,8 @@ with tf.Graph().as_default() as g2:
         net.restore_pretrained_variables(session=sess)
         res = sess.run(content_layer_tensors)
         var = sess.run(img_tensor)
-        for i in range(1000):
-            if i % 10 == 0:
+        for i in range(3000):
+            if i % 20 == 0:
                 imsave("output-{}.jpg".format(i), sess.run(img_tensor)[0])
                 summary = sess.run(merged)
                 summary_writer.add_summary(summary, i)
