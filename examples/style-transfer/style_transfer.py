@@ -16,9 +16,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--content", type=str, default="img/tensorflow_logo.png")
 parser.add_argument("--style", type=str, default="img/chouju_sumou.jpg")
 parser.add_argument("--output_dir", type=str, default="outputs")
-parser.add_argument("--content_weight", type=float, default=5e0)
+parser.add_argument("--content_weight", type=float, default=5e0*2)
 parser.add_argument("--style_weight", type=float, default=5e2)
-parser.add_argument("--iterations", type=int, default=1000)
+parser.add_argument("--iterations", type=int, default=3000)
 parser.add_argument("--learning_rate", type=float, default=1e1)
 args, unknown_args = parser.parse_known_args()
 
@@ -31,7 +31,7 @@ LEARNING_RATE = args.learning_rate
 ITERATIONS = args.iterations
 
 content_img = np.array([imresize(imread(CONTENT, mode="RGB"), [224, 224])], dtype=np.float32)
-content_img[content_img == 0.] = 254.
+# content_img[content_img == 0.] = 254.
 style_img = np.array([imresize(imread("img/chouju_sumou.jpg", mode="RGB"), [224, 224])], dtype=np.float32)
 
 with tf.Graph().as_default() as g1:
