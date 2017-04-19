@@ -17,16 +17,9 @@ git clone https://github.com/sfujiwara/tfmodel.git
 cd examples/style-transfer
 ```
 
-### Run on Local
+Run Python script as below:
 
 ```
-python style_transfer.py \
-  --learning_rate 1.0 \
-```
-
-### Run on Google Compute Engine
-
-```
-cd gce
-sh create_instance.sh
+python style_transfer.py --content=img/contents/tensorflow_logo.jpg \
+                         --style=img/styles/udnie.jpg
 ```
