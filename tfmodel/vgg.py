@@ -24,14 +24,15 @@ def _vgg_conv2d(inputs, filters, trainable=True):
 
 class Vgg16:
 
-    def __init__(self, img_tensor, reuse=False, trainable=True):
+    def __init__(self, img_tensor, reuse=False, trainable=True, preprocessing=True):
         self.saver = None
-        self._build_graph(img_tensor, reuse, trainable=trainable)
+        self._build_graph(img_tensor, reuse, trainable, preprocessing)
 
-    def _build_graph(self, img_tensor, reuse, trainable):
+    def _build_graph(self, img_tensor, reuse, trainable, preprocessing):
         # Preprocessing
-        with tf.name_scope("preprocessing"):
-            img_tensor = img_tensor - tf.constant(VGG_MEAN, name="vgg_mean")
+        if preprocessing:
+            with tf.name_scope("preprocessing"):
+                img_tensor = img_tensor - tf.constant(VGG_MEAN, name="vgg_mean")
         # Convolution layers 1
         with tf.variable_scope("conv1", reuse=reuse):
             with tf.variable_scope("conv1_1"):
