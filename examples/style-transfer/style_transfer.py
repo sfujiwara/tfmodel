@@ -18,9 +18,10 @@ parser.add_argument("--style", type=str, default="img/styles/chouju_sumou.jpg")
 parser.add_argument("--output_dir", type=str, default="outputs")
 parser.add_argument("--content_weight", type=float, default=0.05)
 parser.add_argument("--style_weight", type=float, default=0.95)
-parser.add_argument("--tv_weight", type=float, default=0.0005)
+parser.add_argument("--tv_weight", type=float, default=0.0001)
 parser.add_argument("--iterations", type=int, default=3000)
 parser.add_argument("--learning_rate", type=float, default=1e1)
+parser.add_argument("--summary_iterations", type=int, default=20)
 args, unknown_args = parser.parse_known_args()
 
 CONTENT = args.content
@@ -31,6 +32,7 @@ STYLE_WEIGHT = args.style_weight
 TV_WEIGHT = args.tv_weight
 LEARNING_RATE = args.learning_rate
 ITERATIONS = args.iterations
+SUMMARY_ITERATIONS = args.summary_iterations
 
 content_img = np.array([imresize(imread(CONTENT, mode="RGB"), [224, 224])], dtype=np.float32)
 style_img = np.array([imresize(imread(STYLE, mode="RGB"), [224, 224])], dtype=np.float32)
@@ -104,7 +106,7 @@ with tf.Graph().as_default() as g2:
         res = sess.run(content_layer_tensors)
         var = sess.run(img_tensor)
         for i in range(ITERATIONS):
-            if i % 20 == 0:
+            if i % SUMMARY_ITERATIONS == 0:
                 if not os.path.exists(OUTPUT_DIR):
                     os.mkdir(OUTPUT_DIR)
                 imsave(os.path.join(OUTPUT_DIR, "output-{}.jpg".format(i)), sess.run(img_tensor)[0])

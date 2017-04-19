@@ -34,4 +34,9 @@ git clone https://github.com/sfujiwara/tfmodel.git
 cd tfmodel/examples/style-transfer
 
 tensorboard --logdir=summary &
-python style_transfer.py
+python style_transfer.py --tv_weight=0.0001 \
+                         --content_weight=0.07 \
+                         --style_weight=0.93 \
+                         --style=img/styles/udnie.jpg \
+                         --summary_iterations=100 \
+                         --iterations=3000

@@ -20,6 +20,10 @@ cd examples/style-transfer
 Run Python script as below:
 
 ```
-python style_transfer.py --content=img/contents/tensorflow_logo.jpg \
-                         --style=img/styles/udnie.jpg
+python style_transfer.py --tv_weight=0.0001 \
+                         --content_weight=0.07 \
+                         --style_weight=0.93 \
+                         --style=img/styles/udnie.jpg \
+                         --summary_iterations=2 \
+                         --iterations=50
 ```
