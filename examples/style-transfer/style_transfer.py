@@ -19,7 +19,7 @@ parser.add_argument("--output_dir", type=str, default="outputs")
 parser.add_argument("--content_weight", type=float, default=0.1)
 parser.add_argument("--style_weight", type=float, default=0.9)
 parser.add_argument("--tv_weight", type=float, default=0.001)
-parser.add_argument("--iterations", type=int, default=1000)
+parser.add_argument("--iterations", type=int, default=3000)
 parser.add_argument("--learning_rate", type=float, default=2e0)
 args, unknown_args = parser.parse_known_args()
 
@@ -87,6 +87,7 @@ with tf.Graph().as_default() as g2:
             tf.nn.l2_loss(img_tensor[:, 1:, :, :] - img_tensor[:, :w-1, :, :]),
             tf.nn.l2_loss(img_tensor[:, :, 1:, :] - img_tensor[:, :, :w-1, :])
         ]) * tf.constant(TV_WEIGHT, name="tv_weight")
+        tf.summary.scalar("total_variation_loss", tv_loss)
 
     # Build total loss
     with tf.name_scope("total_loss"):
