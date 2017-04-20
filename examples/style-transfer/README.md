@@ -2,6 +2,10 @@
 
 An implementation of "[A Neural Algorithm of Artistic Style](https://arxiv.org/abs/1508.06576)" with TensorFlow.
 
+<img src="img/contents/tensorflow_logo.jpg" width=128px>
+<img src="img/styles/udnie.jpg" width=128px>
+<img src="img/results/tensorflow-logo_x_udnie_2000.jpg" width=128px>
+
 ## Requirements
 
 * TensorFlow
