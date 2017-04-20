@@ -40,7 +40,7 @@ style_img = np.array([imresize(imread(STYLE, mode="RGB"), [224, 224])], dtype=np
 # Compute target content and target style
 with tf.Graph().as_default() as g1:
     img_ph = tf.placeholder(tf.float32, [1, 224, 224, 3])
-    net = tfmodel.vgg.Vgg16(img_tensor=img_ph)
+    net = tfmodel.vgg.Vgg16(img_tensor=tfmodel.vgg.preprocess(img_ph))
     content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
     style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
     with tf.Session() as sess:
@@ -53,7 +53,7 @@ with tf.Graph().as_default() as g2:
     tf.summary.image("generated_image", img_tensor, max_outputs=100)
     tf.summary.image("content", content_img)
     tf.summary.image("style", style_img)
-    net = tfmodel.vgg.Vgg16(img_tensor=img_tensor, trainable=False)
+    net = tfmodel.vgg.Vgg16(img_tensor=tfmodel.vgg.preprocess(img_tensor), trainable=False)
     content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
     style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
 
