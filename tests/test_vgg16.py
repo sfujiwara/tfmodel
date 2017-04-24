@@ -24,7 +24,7 @@ class TestVgg16(unittest.TestCase):
                 model_tf.restore_pretrained_variables(sess)
                 p_tf = sess.run(tf.nn.softmax(model_tf.logits), feed_dict={img_ph: img})[0]
         # Try VGG 16 model included in Keras
-        model = VGG16(weights='imagenet', include_top=True)
+        model = VGG16(weights="imagenet", include_top=True)
         p_keras = model.predict(img[:, :, :, ::-1])[0]
         np.testing.assert_array_almost_equal(p_tf.flatten(), p_keras.flatten())
 
