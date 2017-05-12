@@ -30,11 +30,11 @@ def _vgg_conv2d(inputs, filters, trainable=True):
 
 class Vgg16:
 
-    def __init__(self, img_tensor, reuse=False, trainable=True):
+    def __init__(self, img_tensor, reuse=False, trainable=True, include_top=True):
         self.saver = None
-        self._build_graph(img_tensor, reuse, trainable)
+        self._build_graph(img_tensor, reuse, trainable, include_top)
 
-    def _build_graph(self, img_tensor, reuse, trainable, include_top=True):
+    def _build_graph(self, img_tensor, reuse, trainable, include_top):
         # Convolution layers 1
         with tf.variable_scope("conv1", reuse=reuse):
             with tf.variable_scope("conv1_1"):

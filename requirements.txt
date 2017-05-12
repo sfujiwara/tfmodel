@@ -2,5 +2,5 @@ pillow
 h5py
 numpy
 scipy
-tensorflow==1.1.0rc0
+tensorflow==1.1.0
 keras
