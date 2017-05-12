@@ -7,3 +7,4 @@ outputs
 examples/sandbox/sandbox.py
 sandbox
 models
+data
