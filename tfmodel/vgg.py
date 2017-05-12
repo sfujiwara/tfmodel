@@ -42,45 +42,55 @@ class Vgg16:
             with tf.variable_scope("conv1_2"):
                 self.h_conv1_2, self.w_conv1_2, self.b_conv1_2 = _vgg_conv2d(self.h_conv1_1, 64, trainable)
         # Pooling 1
-        pool1 = tf.nn.max_pool(self.h_conv1_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool1")
+        self.pool1 = tf.nn.max_pool(
+            self.h_conv1_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool1"
+        )
         # Convolution layers 2
         with tf.variable_scope("conv2", reuse=reuse):
             with tf.variable_scope("conv2_1"):
-                self.h_conv2_1, self.w_conv2_1, self.b_conv2_1 = _vgg_conv2d(pool1, 128, trainable)
+                self.h_conv2_1, self.w_conv2_1, self.b_conv2_1 = _vgg_conv2d(self.pool1, 128, trainable)
             with tf.variable_scope("conv2_2"):
                 self.h_conv2_2, self.w_conv2_2, self.b_conv2_2 = _vgg_conv2d(self.h_conv2_1, 128, trainable)
         # Pooling 2
-        pool2 = tf.nn.max_pool(self.h_conv2_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool2")
+        self.pool2 = tf.nn.max_pool(
+            self.h_conv2_2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool2"
+        )
         # Convolution layers 3
         with tf.variable_scope("conv3", reuse=reuse):
             with tf.variable_scope("conv3_1"):
-                self.h_conv3_1, self.w_conv3_1, self.b_conv3_1 = _vgg_conv2d(pool2, 256, trainable)
+                self.h_conv3_1, self.w_conv3_1, self.b_conv3_1 = _vgg_conv2d(self.pool2, 256, trainable)
             with tf.variable_scope("conv3_2"):
                 self.h_conv3_2, self.w_conv3_2, self.b_conv3_2 = _vgg_conv2d(self.h_conv3_1, 256, trainable)
             with tf.variable_scope("conv3_3"):
                 self.h_conv3_3, self.w_conv3_3, self.b_conv3_3 = _vgg_conv2d(self.h_conv3_2, 256, trainable)
         # Pooling 3
-        pool3 = tf.nn.max_pool(self.h_conv3_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool3")
+        self.pool3 = tf.nn.max_pool(
+            self.h_conv3_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool3"
+        )
         # Convolution 4
         with tf.variable_scope("conv4", reuse=reuse):
             with tf.variable_scope("conv4_1"):
-                self.h_conv4_1, self.w_conv4_1, self.b_conv4_1 = _vgg_conv2d(pool3, 512, trainable)
+                self.h_conv4_1, self.w_conv4_1, self.b_conv4_1 = _vgg_conv2d(self.pool3, 512, trainable)
             with tf.variable_scope("conv4_2"):
                 self.h_conv4_2, self.w_conv4_2, self.b_conv4_2 = _vgg_conv2d(self.h_conv4_1, 512, trainable)
             with tf.variable_scope("conv4_3"):
                 self.h_conv4_3, self.w_conv4_3, self.b_conv4_3 = _vgg_conv2d(self.h_conv4_2, 512, trainable)
         # Pooling 4
-        pool4 = tf.nn.max_pool(self.h_conv4_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool4")
+        self.pool4 = tf.nn.max_pool(
+            self.h_conv4_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool4"
+        )
         # Convolution 5
         with tf.variable_scope("conv5", reuse=reuse):
             with tf.variable_scope("conv5_1"):
-                self.h_conv5_1, self.w_conv5_1, self.b_conv5_1 = _vgg_conv2d(pool4, 512, trainable)
+                self.h_conv5_1, self.w_conv5_1, self.b_conv5_1 = _vgg_conv2d(self.pool4, 512, trainable)
             with tf.variable_scope("conv5_2"):
                 self.h_conv5_2, self.w_conv5_2, self.b_conv5_2 = _vgg_conv2d(self.h_conv5_1, 512, trainable)
             with tf.variable_scope("conv5_3"):
                 self.h_conv5_3, self.w_conv5_3, self.b_conv5_3 = _vgg_conv2d(self.h_conv5_2, 512, trainable)
         # Pooling 5
-        pool5 = tf.nn.max_pool(self.h_conv5_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool5")
+        self.pool5 = tf.nn.max_pool(
+            self.h_conv5_3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME", name="pool5"
+        )
         self._var_dict = {
             "vgg_16/conv1/conv1_1/weights": self.w_conv1_1,
             "vgg_16/conv1/conv1_1/biases": self.b_conv1_1,
@@ -115,7 +125,7 @@ class Vgg16:
                 self.w_fc6 = tf.get_variable("weights", [7, 7, 512, 4096], tf.float32, tf.random_normal_initializer())
                 self.b_fc6 = tf.get_variable("biases", [4096], tf.float32, tf.zeros_initializer())
                 self.h_fc6 = tf.nn.relu(
-                    tf.nn.bias_add(tf.nn.conv2d(pool5, self.w_fc6, strides=[1, 1, 1, 1], padding="VALID"), self.b_fc6)
+                    tf.nn.bias_add(tf.nn.conv2d(self.pool5, self.w_fc6, strides=[1, 1, 1, 1], padding="VALID"), self.b_fc6)
                 )
             # Fully connected 7
             with tf.variable_scope("fc7", reuse=reuse):
