@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
 
+import argparse
 import tensorflow as tf
 import tfmodel
 
-N_CLASS = 2
+parser = argparse.ArgumentParser()
+parser.add_argument("--train-csv", type=str)
+args, unknown_args = parser.parse_known_args()
+
+N_CLASS = 24
 BATCH_SIZE = 2
+TRAIN_CSV = args.train_csv
 
 # Build graph
 with tf.Graph().as_default() as g:
     # Queue
     with tf.name_scope("queue"):
-        filename_queue = tf.train.string_input_producer(["data/train.csv"])
+        filename_queue = tf.train.string_input_producer([TRAIN_CSV])
         reader = tf.TextLineReader()
         key, value = reader.read(filename_queue)
         img_file_path, label = tf.decode_csv(value, record_defaults=[[""], [""]])
@@ -27,22 +33,21 @@ with tf.Graph().as_default() as g:
     # Build graph for forward step
     img_ph = tf.placeholder_with_default(train_image_batch, shape=[None, 224, 224, 3])
     label_ph = tf.placeholder_with_default(train_label_batch, shape=[None, N_CLASS])
-    nets = tfmodel.vgg.Vgg16(img_tensor=img_ph, trainable=False, include_top=False)
+    nets = tfmodel.vgg.Vgg16(img_tensor=tfmodel.vgg.preprocess(img_ph), trainable=False, include_top=False)
     features = tf.reshape(nets.pool5, [-1, 7*7*512])
     logits = tf.layers.dense(features, N_CLASS)
     outputs = tf.nn.softmax(logits)
     # Build loss graph
-    with tf.name_scope("cross_entropy"):
-        loss = -tf.reduce_mean(tf.log(outputs) * label_ph)
+    with tf.name_scope("loss"):
+        loss = tf.losses.softmax_cross_entropy(onehot_labels=label_ph, logits=logits)
         tf.summary.scalar(tensor=loss, name="loss")
     # Build optimizer
-    train_op = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(loss)
+    train_op = tf.train.AdamOptimizer(learning_rate=1e-2).minimize(loss)
     # Initialization operation
     init_op = tf.global_variables_initializer()
     # Create summary writer
-    tf.summary.FileWriter(logdir="summary", graph=g)
+    train_writer = tf.summary.FileWriter("summary/train", graph=g)
     summary_op = tf.summary.merge_all()
-    train_writer = tf.summary.FileWriter("summary/train", g)
 
 with tf.Session(graph=g) as sess:
     # Initialize all variables
@@ -53,8 +58,10 @@ with tf.Session(graph=g) as sess:
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
 
-    for i in range(10):
+    for i in range(100):
         _, summary, l = sess.run([train_op, summary_op, loss])
         train_writer.add_summary(summary, i)
+        print("Training Loss: {}".format(l))
+        tf.logging.info("Training Loss: {}".format(l))
     coord.request_stop()
     coord.join(threads)
