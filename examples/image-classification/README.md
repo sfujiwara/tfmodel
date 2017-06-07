@@ -21,8 +21,9 @@ pip install -r requirements.txt -t .
 ```
 
 ```
-JOB_NAME="test`date '+%Y%m%d%H%M%S'`"
+JOB_NAME="hoge`date '+%Y%m%d%H%M%S'`"
 PROJECT_ID=`gcloud config list project --format "value(core.project)"`
+TRAIN_CSV=<path to csv file for training>
 
 gcloud ml-engine jobs submit training ${JOB_NAME} \
   --package-path=trainer \
@@ -31,5 +32,6 @@ gcloud ml-engine jobs submit training ${JOB_NAME} \
   --region=us-central1 \
   --config=mlengine.yaml \
   -- \
-  --train-csv=${TRAIN_CSV}
+  --train_csv=${TRAIN_CSV} \
+  --output_path=<output directory for summary and model>
 ```

@@ -1,16 +1,23 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import os
 import tensorflow as tf
 import tfmodel
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--train-csv", type=str)
+parser.add_argument("--train_csv", type=str)
+parser.add_argument("--output_path", type=str)
+parser.add_argument("--learning_rate", type=float, default=0.01)
+parser.add_argument("--batch_size", type=int, default=100)
+parser.add_argument("--n_class", type=int, default=24)
 args, unknown_args = parser.parse_known_args()
 
-N_CLASS = 24
-BATCH_SIZE = 2
+N_CLASS = args.n_class
+BATCH_SIZE = args.batch_size
 TRAIN_CSV = args.train_csv
+LEARNING_RATE = args.learning_rate
+OUTPUT_PATH = args.output_path
 
 # Build graph
 with tf.Graph().as_default() as g:
@@ -40,13 +47,13 @@ with tf.Graph().as_default() as g:
     # Build loss graph
     with tf.name_scope("loss"):
         loss = tf.losses.softmax_cross_entropy(onehot_labels=label_ph, logits=logits)
-        tf.summary.scalar(tensor=loss, name="loss")
+        tf.summary.scalar(tensor=loss, name="cross_entropy")
     # Build optimizer
-    train_op = tf.train.AdamOptimizer(learning_rate=1e-2).minimize(loss)
+    train_op = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(loss)
     # Initialization operation
     init_op = tf.global_variables_initializer()
     # Create summary writer
-    train_writer = tf.summary.FileWriter("summary/train", graph=g)
+    train_writer = tf.summary.FileWriter(os.path.join(OUTPUT_PATH, "summaries", "train"), graph=g)
     summary_op = tf.summary.merge_all()
 
 with tf.Session(graph=g) as sess:
@@ -57,11 +64,10 @@ with tf.Session(graph=g) as sess:
     # Start populating the filename queue
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
-
-    for i in range(100):
+    # Start training iteration
+    for i in range(10000):
         _, summary, l = sess.run([train_op, summary_op, loss])
         train_writer.add_summary(summary, i)
-        print("Training Loss: {}".format(l))
-        tf.logging.info("Training Loss: {}".format(l))
+        tf.logging.info("Iteration: {0} Training Loss: {1}".format(i, l))
     coord.request_stop()
     coord.join(threads)
