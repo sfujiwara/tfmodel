@@ -35,7 +35,8 @@ with tf.Graph().as_default() as g:
         label = tf.one_hot(label, depth=N_CLASS)
         train_image_batch, train_label_batch = tf.train.batch(
             [image, label],
-            batch_size=BATCH_SIZE
+            batch_size=BATCH_SIZE,
+            num_threads=128
         )
     # Build graph for forward step
     img_ph = tf.placeholder_with_default(train_image_batch, shape=[None, 224, 224, 3])
