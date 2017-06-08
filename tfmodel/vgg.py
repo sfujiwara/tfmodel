@@ -145,7 +145,6 @@ class Vgg16:
                 self.logits = self.h_fc8
             self._var_dict.update(
                 {
-
                     "vgg_16/fc6/weights": self.w_fc6,
                     "vgg_16/fc6/biases": self.b_fc6,
                     "vgg_16/fc7/weights": self.w_fc7,
