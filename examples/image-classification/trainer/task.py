@@ -19,9 +19,8 @@ TRAIN_CSV = args.train_csv
 LEARNING_RATE = args.learning_rate
 OUTPUT_PATH = args.output_path
 
-# Build graph
-with tf.Graph().as_default() as g:
-    # Queue
+
+def build_queue():
     with tf.name_scope("queue"):
         filename_queue = tf.train.string_input_producer([TRAIN_CSV])
         reader = tf.TextLineReader()
@@ -38,6 +37,12 @@ with tf.Graph().as_default() as g:
             batch_size=BATCH_SIZE,
             num_threads=128
         )
+        return train_image_batch, train_label_batch
+
+# Build graph
+with tf.Graph().as_default() as g:
+    # Queue
+    train_image_batch, train_label_batch = build_queue()
     # Build graph for forward step
     img_ph = tf.placeholder_with_default(train_image_batch, shape=[None, 224, 224, 3])
     label_ph = tf.placeholder_with_default(train_label_batch, shape=[None, N_CLASS])
