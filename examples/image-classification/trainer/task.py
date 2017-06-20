@@ -23,6 +23,8 @@ LEARNING_RATE = args.learning_rate
 OUTPUT_PATH = args.output_path
 N_EPOCHS = args.n_epochs
 
+CHECKPOINT_DIR = os.path.join(OUTPUT_PATH, "checkpoints")
+
 
 def build_queue(csv_file):
     with tf.name_scope("queue"):
@@ -44,6 +46,31 @@ def build_queue(csv_file):
         )
         return train_image_batch, train_label_batch
 
+
+def evaluate():
+    last_checkpoint = tf.train.latest_checkpoint(CHECKPOINT_DIR)
+    with tf.Graph().as_default() as g:
+        test_image_batch, test_label_batch = build_queue(TEST_CSV)
+        nets = tfmodel.vgg.Vgg16(img_tensor=test_image_batch, include_top=False)
+        features = tf.reshape(nets.pool5, [-1, 7 * 7 * 512])
+        logits = tf.layers.dense(features, N_CLASSES)
+        outputs = tf.nn.softmax(logits)
+        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+        with tf.name_scope("loss"):
+            loss = tf.losses.softmax_cross_entropy(onehot_labels=test_label_batch, logits=logits)
+            tf.summary.scalar(tensor=loss, name="cross_entropy")
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            sess.run(init_op)
+            # TODO: create queue runner
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(coord=coord)
+            tf.logging.info("latest checkpoint: {}".format(last_checkpoint))
+            saver.restore(sess, last_checkpoint)
+            l = sess.run(loss)
+        # TODO: Close queue
+    return l
+
 # Build graph
 with tf.Graph().as_default() as g:
     # Queue
@@ -61,6 +88,8 @@ with tf.Graph().as_default() as g:
         tf.summary.scalar(tensor=loss, name="cross_entropy")
     # Build optimizer
     train_op = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(loss)
+    # Create saver
+    saver = tf.train.Saver()
     # Initialization operation
     init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
     # Create summary writer
@@ -81,6 +110,12 @@ with tf.Session(graph=g) as sess:
             _, summary, l = sess.run([train_op, summary_op, loss])
             train_writer.add_summary(summary, i)
             tf.logging.info("Iteration: {0} Training Loss: {1}".format(i, l))
+            if i % 20 == 0:
+                tf.gfile.MkDir(CHECKPOINT_DIR)
+                saver.save(sess, os.path.join(CHECKPOINT_DIR, "export"))
+                test_loss = evaluate()
+                tf.logging.info("Test Loss: {0}".format(l))
+
     except tf.errors.OutOfRangeError:
         tf.logging.info("Done training -- epoch limit reached")
     finally:
