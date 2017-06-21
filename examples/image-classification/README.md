@@ -11,7 +11,10 @@ path/to/image/file.jpg,0
 ## Training on Local
 
 ```
-python -m trainer.task
+python -m trainer.task \
+  --train_csv=${TRAIN_CSV} \
+  --test_csv=${TEST_CSV} \
+  --output_path=outputs
 ```
 
 ## Training on ML Engine

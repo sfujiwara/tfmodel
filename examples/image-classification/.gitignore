@@ -1,3 +1,4 @@
 tfmodel*
 *.sh
 *egg-info
+outputs

@@ -26,25 +26,26 @@ N_EPOCHS = args.n_epochs
 CHECKPOINT_DIR = os.path.join(OUTPUT_PATH, "checkpoints")
 
 
-def build_queue(csv_file):
+def build_queue(csv_file, num_epochs=None):
     with tf.name_scope("queue"):
-        filename_queue = tf.train.string_input_producer([csv_file], num_epochs=N_EPOCHS)
+        filename_queue = tf.train.string_input_producer([csv_file], num_epochs=num_epochs)
         reader = tf.TextLineReader(skip_header_lines=1)
         key, value = reader.read(filename_queue)
-        img_file_path, label = tf.decode_csv(value, record_defaults=[[""], [""]])
+        img_file_path, label = tf.decode_csv(value, record_defaults=[[""], [1]])
         image = tf.image.decode_image(tf.read_file(img_file_path), channels=3)
         image = tf.image.resize_bicubic([image], [224, 224])[0]
         image.set_shape([224, 224, 3])
         image = tf.cast(image, tf.float32)
-        label = tf.to_int32(tf.string_to_number(label))
+        # label = tf.to_int32(tf.string_to_number(label))
         label = tf.one_hot(label, depth=N_CLASSES)
-        train_image_batch, train_label_batch = tf.train.batch(
+        image_batch, label_batch = tf.train.shuffle_batch(
             [image, label],
             batch_size=BATCH_SIZE,
-            num_threads=128,
+            num_threads=64,
             capacity=512,
+            min_after_dequeue=128
         )
-        return train_image_batch, train_label_batch
+        return image_batch, label_batch
 
 
 def evaluate():
@@ -62,19 +63,19 @@ def evaluate():
         saver = tf.train.Saver()
         with tf.Session() as sess:
             sess.run(init_op)
-            # TODO: create queue runner
             coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
+            threads = tf.train.start_queue_runners(sess=sess, coord=coord)
             tf.logging.info("latest checkpoint: {}".format(last_checkpoint))
             saver.restore(sess, last_checkpoint)
             l = sess.run(loss)
-        # TODO: Close queue
+            coord.request_stop()
+            coord.join(threads=threads)
     return l
 
 # Build graph
 with tf.Graph().as_default() as g:
     # Queue
-    train_image_batch, train_label_batch = build_queue(TRAIN_CSV)
+    train_image_batch, train_label_batch = build_queue(TRAIN_CSV, num_epochs=N_EPOCHS)
     # Build graph for forward step
     img_ph = tf.placeholder_with_default(train_image_batch, shape=[None, 224, 224, 3])
     label_ph = tf.placeholder_with_default(train_label_batch, shape=[None, N_CLASSES])
@@ -115,9 +116,8 @@ with tf.Session(graph=g) as sess:
                 saver.save(sess, os.path.join(CHECKPOINT_DIR, "export"))
                 test_loss = evaluate()
                 tf.logging.info("Test Loss: {0}".format(l))
-
     except tf.errors.OutOfRangeError:
         tf.logging.info("Done training -- epoch limit reached")
     finally:
         coord.request_stop()
-    coord.join(threads)
+        coord.join(threads)
