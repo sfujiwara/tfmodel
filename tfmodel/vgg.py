@@ -2,6 +2,7 @@
 
 import os
 import util
+import hook
 import tensorflow as tf
 
 MODEL_URL = "http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz"
@@ -163,3 +164,14 @@ class Vgg16:
         util.maybe_download_and_extract(dest_directory=save_dir, data_url=MODEL_URL)
         checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
         self.saver.restore(session, checkpoint_path)
+
+    def create_model_load_hook(self):
+        # Create saver
+        if not self.saver:
+            self.saver = tf.train.Saver(var_list=self._var_dict)
+        # Download weights
+        save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
+        util.maybe_download_and_extract(dest_directory=save_dir, data_url=MODEL_URL)
+        checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
+        model_load_hook = hook.ModelLoadHook(saver=self.saver, checkpoint=checkpoint_path)
+        return model_load_hook

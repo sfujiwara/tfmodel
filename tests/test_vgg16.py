@@ -49,3 +49,24 @@ class TestVgg16(unittest.TestCase):
                 saver.restore(sess, "{}/.tfmodel/vgg16/vgg_16.ckpt".format(os.environ["HOME"]))
                 logits_slim = sess.run(net, feed_dict={x_ph: img})[0]
         np.testing.assert_array_almost_equal(logits_tf.flatten(), logits_slim.flatten())
+
+    def test_vgg16_hook(self):
+        # Load sample image
+        img = np.random.normal(size=[1, 224, 224, 3])
+        # Try VGG 16 model converted for TensorFlow
+        with tf.Graph().as_default() as g:
+            img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
+            model_tf = tfmodel.vgg.Vgg16(img_ph)
+            model_load_hook = model_tf.create_model_load_hook()
+            with tf.train.MonitoredTrainingSession(hooks=[model_load_hook]) as mon_sess:
+                logits_tf = mon_sess.run(model_tf.logits, feed_dict={img_ph: img})[0]
+        # Try VGG 16 model included in TF-Slim
+        with tf.Graph().as_default() as g:
+            x_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
+            net, end_points = nets.vgg.vgg_16(inputs=x_ph, num_classes=1000, is_training=False)
+            saver = tf.train.Saver()
+            tf.summary.FileWriter(logdir="summary/slim", graph=g)
+            with tf.Session() as sess:
+                saver.restore(sess, "{}/.tfmodel/vgg16/vgg_16.ckpt".format(os.environ["HOME"]))
+                logits_slim = sess.run(net, feed_dict={x_ph: img})[0]
+        np.testing.assert_array_almost_equal(logits_tf.flatten(), logits_slim.flatten())
