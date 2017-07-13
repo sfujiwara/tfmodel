@@ -165,17 +165,6 @@ class Vgg16:
         checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
         self.saver.restore(session, checkpoint_path)
 
-    def create_model_load_hook(self):
-        # Create saver
-        if not self.saver:
-            self.saver = tf.train.Saver(var_list=self._var_dict)
-        # Download weights
-        save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
-        util.maybe_download_and_extract(dest_directory=save_dir, data_url=MODEL_URL)
-        checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
-        model_load_hook = hook.ModelLoadHook(saver=self.saver, checkpoint=checkpoint_path)
-        return model_load_hook
-
     def create_init_fn(self):
         # Create saver
         if not self.saver:
@@ -187,5 +176,6 @@ class Vgg16:
 
         def init_fn(scaffold, session):
             self.saver.restore(session, checkpoint_path)
+            tf.logging.info("Successfully loaded checkpoint from {}".format(checkpoint_path))
 
         return init_fn
