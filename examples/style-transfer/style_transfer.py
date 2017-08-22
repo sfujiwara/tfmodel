@@ -16,8 +16,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--content", type=str, default="img/contents/tensorflow_logo.jpg")
 parser.add_argument("--style", type=str, default="img/styles/chouju_sumou.jpg")
 parser.add_argument("--output_dir", type=str, default="outputs")
-parser.add_argument("--content_weight", type=float, default=0.05)
-parser.add_argument("--style_weight", type=float, default=0.95)
+parser.add_argument("--content_weight", type=float, default=0.02)
+parser.add_argument("--style_weight", type=float, default=0.98)
 parser.add_argument("--tv_weight", type=float, default=0.0001)
 parser.add_argument("--iterations", type=int, default=3000)
 parser.add_argument("--learning_rate", type=float, default=1e1)
@@ -34,28 +34,42 @@ LEARNING_RATE = args.learning_rate
 ITERATIONS = args.iterations
 SUMMARY_ITERATIONS = args.summary_iterations
 
+CONTENT_LAYERS = [
+    "vgg_16/conv4/conv4_2/Relu:0",
+    "vgg_16/conv5/conv5_2/Relu:0",
+]
+STYLE_LAYERS = [
+    "vgg_16/conv1/conv1_1/Relu:0",
+    "vgg_16/conv2/conv2_1/Relu:0",
+    "vgg_16/conv3/conv3_1/Relu:0",
+    "vgg_16/conv4/conv4_1/Relu:0",
+    "vgg_16/conv5/conv5_1/Relu:0",
+]
+PRE_TRAINED_MODEL_PATH = os.path.join(os.environ.get("HOME"), ".tfmodel", "vgg16", "vgg_16.ckpt")
+
 content_img = np.array([imresize(imread(CONTENT, mode="RGB"), [224, 224])], dtype=np.float32)
 style_img = np.array([imresize(imread(STYLE, mode="RGB"), [224, 224])], dtype=np.float32)
 
 # Compute target content and target style
 with tf.Graph().as_default() as g1:
     img_ph = tf.placeholder(tf.float32, [1, 224, 224, 3])
-    net = tfmodel.vgg.Vgg16(img_tensor=tfmodel.vgg.preprocess(img_ph))
-    content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
-    style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
+    _ = tfmodel.vgg.build_vgg16_graph(img_tensor=img_ph, include_top=False, trainable=False)
+    content_layer_tensors = [g1.get_tensor_by_name(i) for i in CONTENT_LAYERS]
+    style_layer_tensors = [g1.get_tensor_by_name(i) for i in STYLE_LAYERS]
+    saver = tf.train.Saver()
     with tf.Session() as sess:
-        net.restore_pretrained_variables(session=sess)
+        saver.restore(sess, PRE_TRAINED_MODEL_PATH)
         content_layers = sess.run(content_layer_tensors, feed_dict={img_ph: content_img})
         style_layers = sess.run(style_layer_tensors, feed_dict={img_ph: style_img})
 
 with tf.Graph().as_default() as g2:
-    img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3], stddev=0.256))
+    img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3], stddev=0.1))
     tf.summary.image("generated_image", img_tensor, max_outputs=100)
     tf.summary.image("content", content_img)
     tf.summary.image("style", style_img)
-    net = tfmodel.vgg.Vgg16(img_tensor=tfmodel.vgg.preprocess(img_tensor), trainable=False)
-    content_layer_tensors = [net.h_conv4_2, net.h_conv5_2]
-    style_layer_tensors = [net.h_conv1_1, net.h_conv2_1, net.h_conv3_1, net.h_conv4_1, net.h_conv5_1]
+    _ = tfmodel.vgg.build_vgg16_graph(img_tensor=img_tensor, include_top=False, trainable=False)
+    content_layer_tensors = [g2.get_tensor_by_name(i) for i in CONTENT_LAYERS]
+    style_layer_tensors = [g2.get_tensor_by_name(i) for i in STYLE_LAYERS]
 
     # Build content loss
     with tf.name_scope("content_loss"):
@@ -98,13 +112,14 @@ with tf.Graph().as_default() as g2:
 
     optim = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(total_loss)
     init_op = tf.global_variables_initializer()
+    vgg16_saver = tf.train.Saver(tf.get_collection(tfmodel.vgg.VGG16_GRAPH_KEY))
     summary_writer = tf.summary.FileWriter("summary/neuralstyle", graph=g2)
     merged = tf.summary.merge_all()
     with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
         sess.run(init_op)
-        net.restore_pretrained_variables(session=sess)
-        res = sess.run(content_layer_tensors)
-        var = sess.run(img_tensor)
+        vgg16_saver.restore(sess, PRE_TRAINED_MODEL_PATH)
+        # res = sess.run(content_layer_tensors)
+        # var = sess.run(img_tensor)
         for i in range(ITERATIONS):
             if i % SUMMARY_ITERATIONS == 0:
                 if not os.path.exists(OUTPUT_DIR):
