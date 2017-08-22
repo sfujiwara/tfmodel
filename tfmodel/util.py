@@ -15,20 +15,29 @@ def maybe_download_and_extract(dest_directory, data_url):
     filepath = os.path.join(dest_directory, filename)
     if not os.path.exists(filepath):
         filepath, _ = urllib.request.urlretrieve(data_url, filepath)
-        print()
         statinfo = os.stat(filepath)
-        print('Successfully downloaded', filename, statinfo.st_size, 'bytes.')
+        tf.logging.info("Successfully downloaded {0} {1} bytes.".format(filename, statinfo.st_size))
     tarfile.open(filepath, 'r:gz').extractall(dest_directory)
 
 
-def embed(input_csv, output_dir):
+def _default_resize_image_fn(img):
+    img = tf.image.resize_bicubic([img], [224, 224])[0]
+    # img = tf.image.resize_bicubic([img], [170, 225])[0]
+    # img = tf.image.resize_image_with_crop_or_pad(img, 224, 224)
+    img.set_shape([224, 224, 3])
+    img = tf.cast(img, dtype=tf.uint8)
+    img = tf.cast(img, dtype=tf.float32)
+    return img
+
+
+def embed(input_csv, output_dir, resize_image_fn=_default_resize_image_fn):
     metadata = [["file", "label"]]
     images = []
     with tf.Graph().as_default() as g:
         for row in tf.gfile.GFile.read(tf.gfile.Open(input_csv)).strip().splitlines():
             file_path, label = row.split(",")
             img = tf.image.decode_jpeg(tf.read_file(file_path), channels=3)
-            img = _resize_image(img)
+            img = resize_image_fn(img)
             metadata.append([file_path, label])
             images.append(img)
         img_tensor = tf.stack(images)
@@ -59,12 +68,3 @@ def embed(input_csv, output_dir):
     # Convert list to TSV
     metadata = "\n".join(["\t".join(i) for i in metadata])
     tf.gfile.Open(os.path.join(output_dir, "metadata.tsv"), "w").write(metadata)
-
-
-def _resize_image(img):
-    img = tf.image.resize_bicubic([img], [170, 225])[0]
-    img = tf.image.resize_image_with_crop_or_pad(img, 224, 224)
-    img.set_shape([224, 224, 3])
-    img = tf.cast(img, dtype=tf.uint8)
-    img = tf.cast(img, dtype=tf.float32)
-    return img
