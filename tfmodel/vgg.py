@@ -121,7 +121,7 @@ def build_vgg16_graph(img_tensor, reuse=False, trainable=True, include_top=False
         )
 
         if not include_top:
-            return pool5
+            return tf.contrib.layers.flatten(pool5)
 
         # Fully connected 6
         with tf.variable_scope("fc6", reuse=reuse):
