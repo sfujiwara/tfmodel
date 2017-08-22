@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os
-import util
 import tensorflow as tf
-from tensorflow.python.util.deprecation import deprecated
 
 
 MODEL_URL = "http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz"
@@ -132,4 +129,4 @@ def build_vgg16_graph(img_tensor, reuse=False, trainable=True, include_top=False
         # Fully connected 8
         with tf.variable_scope("fc8", reuse=reuse):
             h_fc8, w_fc8, b_fc8 = vgg_fc(h_fc7, [1, 1, 4096, 1000])
-        return h_fc8
+        return tf.contrib.layers.flatten(h_fc8)
