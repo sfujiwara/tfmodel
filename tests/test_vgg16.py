@@ -15,6 +15,9 @@ TFMODEL_DIR = os.path.join(os.environ.get("HOME"), ".tfmodel")
 
 class TestVgg16(unittest.TestCase):
 
+    def setUp(self):
+        tfmodel.util.maybe_download_and_extract(os.path.join(TFMODEL_DIR, "vgg16"), tfmodel.vgg.MODEL_URL)
+
     def test_vgg16_with_keras(self):
         # Load sample image
         img = np.random.normal(size=[1, 224, 224, 3])
