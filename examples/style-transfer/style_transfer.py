@@ -6,6 +6,7 @@ import sys
 import numpy as np
 from scipy.misc import imread, imresize, imsave
 import tensorflow as tf
+from PIL import Image
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
 
@@ -35,7 +36,7 @@ ITERATIONS = args.iterations
 SUMMARY_ITERATIONS = args.summary_iterations
 
 CONTENT_LAYERS = [
-    "vgg_16/conv4/conv4_2/Relu:0",
+    # "vgg_16/conv4/conv4_2/Relu:0",
     "vgg_16/conv5/conv5_2/Relu:0",
 ]
 STYLE_LAYERS = [
@@ -47,52 +48,69 @@ STYLE_LAYERS = [
 ]
 PRE_TRAINED_MODEL_PATH = os.path.join(os.environ.get("HOME"), ".tfmodel", "vgg16", "vgg_16.ckpt")
 
-content_img = np.array([imresize(imread(CONTENT, mode="RGB"), [224, 224])], dtype=np.float32)
-style_img = np.array([imresize(imread(STYLE, mode="RGB"), [224, 224])], dtype=np.float32)
 
-# Compute target content and target style
-with tf.Graph().as_default() as g1:
-    img_ph = tf.placeholder(tf.float32, [1, 224, 224, 3])
-    _ = tfmodel.vgg.build_vgg16_graph(img_tensor=img_ph, include_top=False, trainable=False)
-    content_layer_tensors = [g1.get_tensor_by_name(i) for i in CONTENT_LAYERS]
-    style_layer_tensors = [g1.get_tensor_by_name(i) for i in STYLE_LAYERS]
-    saver = tf.train.Saver()
-    with tf.Session() as sess:
-        saver.restore(sess, PRE_TRAINED_MODEL_PATH)
-        content_layers = sess.run(content_layer_tensors, feed_dict={img_ph: content_img})
-        style_layers = sess.run(style_layer_tensors, feed_dict={img_ph: style_img})
+def compute_target_style_grams(style_img):
+    with tf.Graph().as_default() as g1:
+        width, height, _ = style_img.shape
+        img_ph = tf.placeholder(tf.float32, [1, width, height, 3])
+        tfmodel.vgg.build_vgg16_graph(img_tensor=tfmodel.vgg.preprocess(img_ph), include_top=False, trainable=False)
+        style_layer_tensors = [g1.get_tensor_by_name(i) for i in STYLE_LAYERS]
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            saver.restore(sess, PRE_TRAINED_MODEL_PATH)
+            style_layers = sess.run(style_layer_tensors, feed_dict={img_ph: [style_img]})
+    style_grams = []
+    for sl in style_layers:
+        f = np.reshape(sl, (-1, sl.shape[3]))
+        style_grams.append(np.matmul(f.T, f) / sl.size)
+    return style_grams
+
+
+def compute_target_content(content_img):
+    with tf.Graph().as_default() as g1:
+        img_ph = tf.placeholder(tf.float32, [1, 224, 224, 3])
+        _ = tfmodel.vgg.build_vgg16_graph(img_tensor=tfmodel.vgg.preprocess(img_ph), include_top=False, trainable=False)
+        content_layer_tensors = [g1.get_tensor_by_name(i) for i in CONTENT_LAYERS]
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            saver.restore(sess, PRE_TRAINED_MODEL_PATH)
+            content_layers = sess.run(content_layer_tensors, feed_dict={img_ph: [content_img]})
+    return content_layers
+
+
+content_img = imresize(imread(CONTENT, mode="RGB"), [224, 224]).astype(np.float32)
+style_img = imread(STYLE, mode="RGB").astype(np.float32)
+target_style_grams = compute_target_style_grams(style_img)
+target_content_layers = compute_target_content(content_img)
 
 with tf.Graph().as_default() as g2:
-    img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3], stddev=0.1))
+    img_tensor = tf.Variable(tf.random_normal([1, 224, 224, 3], stddev=1., mean=128), name="generated_image")
     tf.summary.image("generated_image", img_tensor, max_outputs=100)
-    tf.summary.image("content", content_img)
-    tf.summary.image("style", style_img)
-    _ = tfmodel.vgg.build_vgg16_graph(img_tensor=img_tensor, include_top=False, trainable=False)
+    tf.summary.image("content", np.expand_dims(content_img, axis=0))
+    tf.summary.image("style", np.expand_dims(style_img, axis=0))
+    tfmodel.vgg.build_vgg16_graph(img_tensor=tfmodel.vgg.preprocess(img_tensor), include_top=False, trainable=False)
     content_layer_tensors = [g2.get_tensor_by_name(i) for i in CONTENT_LAYERS]
     style_layer_tensors = [g2.get_tensor_by_name(i) for i in STYLE_LAYERS]
 
     # Build content loss
     with tf.name_scope("content_loss"):
         content_losses = []
-        for i in range(len(content_layers)):
-            content_losses.append(tf.reduce_mean(tf.squared_difference(content_layer_tensors[i], content_layers[i])))
+        for i in range(len(target_content_layers)):
+            l = tf.losses.mean_squared_error(content_layer_tensors[i], target_content_layers[i])
+            content_losses.append(l)
         content_loss = tf.reduce_sum(content_losses) * tf.constant(CONTENT_WEIGHT, name="content_weight")
         tf.summary.scalar("content_loss", content_loss)
 
     # Build style loss
     with tf.name_scope("style_loss"):
-        style_losses = []
-        for i in range(len(style_layers)):
-            # Compute target gram matrix
-            features = np.reshape(style_layers[i], (-1, style_layers[i].shape[3]))
-            style_gram = np.matmul(features.T, features) / features.size
-            # Build style tensor
-            _, height, width, number = map(lambda x: x.value, style_layer_tensors[i].get_shape())
-            size = height * width * number
-            feats = tf.reshape(style_layer_tensors[i], (-1, number))
-            gram = tf.matmul(tf.transpose(feats), feats) / size
-            style_losses.append(tf.nn.l2_loss(gram - style_gram) / size)
-        style_loss = tf.reduce_sum(style_losses) * tf.constant(STYLE_WEIGHT, name="style_weight")
+        style_loss = 0
+        for i, slt in enumerate(style_layer_tensors):
+            # Build style gram tensors
+            # import IPython; IPython.embed()
+            f = tf.reshape(slt, (-1, slt.get_shape()[3].value))
+            style_gram = tf.matmul(tf.transpose(f), f) / slt.get_shape().num_elements()
+            style_loss += tf.losses.mean_squared_error(style_gram, target_style_grams[i])
+        style_loss *= tf.constant(STYLE_WEIGHT, name="style_weight")
         tf.summary.scalar("style_loss", style_loss)
 
     # Build total variation loss
@@ -118,13 +136,16 @@ with tf.Graph().as_default() as g2:
     with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
         sess.run(init_op)
         vgg16_saver.restore(sess, PRE_TRAINED_MODEL_PATH)
-        # res = sess.run(content_layer_tensors)
-        # var = sess.run(img_tensor)
         for i in range(ITERATIONS):
             if i % SUMMARY_ITERATIONS == 0:
                 if not os.path.exists(OUTPUT_DIR):
                     os.mkdir(OUTPUT_DIR)
-                imsave(os.path.join(OUTPUT_DIR, "output-{}.jpg".format(i)), sess.run(img_tensor)[0])
+                im = np.clip(sess.run(img_tensor)[0], 0, 255).astype(np.uint8)
+                Image.fromarray(im).save(os.path.join(OUTPUT_DIR, "output-{}.jpg".format(i)), quality=95)
+                # imsave(
+                #     os.path.join(OUTPUT_DIR, "output-{}.jpg".format(i)),
+                #     np.clip(sess.run(img_tensor)[0], 0, 255).astype(np.uint8)
+                # )
                 summary = sess.run(merged)
                 summary_writer.add_summary(summary, i)
             _, t, c, s, tv = sess.run([optim, total_loss, content_loss, style_loss, tv_loss])
