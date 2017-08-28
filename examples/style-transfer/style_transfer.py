@@ -114,6 +114,10 @@ def build_total_variation_loss(img_tensor):
     return tv_loss
 
 
+tfmodel.util.maybe_download_and_extract(
+    dest_directory=os.path.join(os.environ.get("HOME"), ".tfmodel", "vgg16"),
+    data_url=tfmodel.vgg.MODEL_URL
+)
 content_img = imresize(imread(CONTENT, mode="RGB"), [224, 224]).astype(np.float32)
 style_img = imread(STYLE, mode="RGB").astype(np.float32)
 target_style_layer_arrays = compute_target_style(style_img)
