@@ -26,7 +26,7 @@ service google-fluentd restart
 
 apt-get -y install python-pip
 pip install -U pip
-pip install tensorflow==1.1.0rc0
+pip install tensorflow
 pip install Pillow
 pip install scipy
 
@@ -34,9 +34,11 @@ git clone https://github.com/sfujiwara/tfmodel.git
 cd tfmodel/examples/style-transfer
 
 tensorboard --logdir=summary &
-python style_transfer.py --tv_weight=0.0001 \
-                         --content_weight=0.07 \
-                         --style_weight=0.93 \
-                         --style=img/styles/udnie.jpg \
-                         --summary_iterations=100 \
-                         --iterations=3000
+python style_transfer.py --style img/styles/chojugiga.jpg \
+                         --content img/contents/tensorflow.jpg \
+                         --tv_weight 0.0 \
+                         --content_weight 0.95 \
+                         --style_weight=0.05 \
+                         --summary_iterations 20 \
+                         --iterations 3000 \
+                         --learning_rate 1.0
