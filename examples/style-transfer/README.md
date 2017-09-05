@@ -5,7 +5,7 @@ An implementation of "[A Neural Algorithm of Artistic Style](https://arxiv.org/a
 <p align = 'left'>
 <img src="img/contents/tensorflow.jpg" width=181>
 <img src="img/styles/chojugiga.jpg" width=181>
-<img src="img/results/tensorflow-logo_x_udnie_2000.jpg" width=181>
+<img src="img/results/tf_x_chojugiga.jpg" width=181>
 </p>
 
 ## Requirements

@@ -46,7 +46,7 @@ STYLE_LAYERS = [
     "vgg_16/conv4/conv4_1/Relu:0",
     "vgg_16/conv5/conv5_1/Relu:0",
 ]
-PRE_TRAINED_MODEL_PATH = os.path.join(os.environ.get("HOME"), ".tfmodel", "vgg16", "vgg_16.ckpt")
+PRE_TRAINED_MODEL_PATH = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16", "vgg_16.ckpt")
 
 
 def compute_target_style(style_img):
@@ -115,7 +115,7 @@ def build_total_variation_loss(img_tensor):
 
 
 tfmodel.util.maybe_download_and_extract(
-    dest_directory=os.path.join(os.environ.get("HOME"), ".tfmodel", "vgg16"),
+    dest_directory=os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16"),
     data_url=tfmodel.vgg.MODEL_URL
 )
 content_img = imresize(imread(CONTENT, mode="RGB"), [224, 224]).astype(np.float32)
