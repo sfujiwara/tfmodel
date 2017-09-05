@@ -17,6 +17,8 @@ img/01_038.png,1
 ```
 
 First column is the paths of the image files.
+Paths to the local disk or Google Cloud Storage (like `gs://...`) will do. 
+
 Second column is the labels of the images.
 
 ## Embed images
