@@ -30,18 +30,21 @@ def _default_resize_image_fn(img):
     return img
 
 
-def embed(input_csv, output_dir, resize_image_fn=_default_resize_image_fn):
+def embed(input_exps, output_dir, resize_image_fn=_default_resize_image_fn):
     metadata = [["file", "label"]]
     images = []
     with tf.Graph().as_default() as g:
-        for row in tf.gfile.GFile.read(tf.gfile.Open(input_csv)).strip().splitlines():
-            file_path, label = row.split(",")
-            img = tf.image.decode_jpeg(tf.read_file(file_path), channels=3)
-            img = resize_image_fn(img)
-            metadata.append([file_path, label])
-            images.append(img)
+        for i, exp in enumerate(input_exps):
+            print i, exp
+            file_list = tf.gfile.Glob(exp)
+            print file_list
+            for f in file_list:
+                print f
+                img = tf.image.decode_jpeg(tf.read_file(f), channels=3)
+                img = resize_image_fn(img)
+                metadata.append([f, str(i)])
+                images.append(img)
         img_tensor = tf.stack(images)
-        print img_tensor
         features = vgg.build_vgg16_graph(img_tensor=img_tensor, include_top=False)
         init_op = tf.global_variables_initializer()
         vgg16_saver = tf.train.Saver(tf.get_collection(vgg.VGG16_GRAPH_KEY))

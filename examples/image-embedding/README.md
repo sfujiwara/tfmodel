@@ -1,32 +1,19 @@
 # Embedding Visualization on TensorBoard
 
-Prepare CSV file as below:
-
-```csv
-img/01_001.png,0
-img/01_003.png,0
-img/01_006.png,0
-img/01_008.png,1
-img/01_012.png,0
-img/01_015.png,0
-img/01_017.png,1
-img/01_024.png,1
-img/01_026.png,1
-img/01_038.png,1
-...
-```
-
-First column is the paths of the image files.
-Paths to the local disk or Google Cloud Storage (like `gs://...`) will do. 
-
-Second column is the labels of the images.
-
 ## Embed images
 
 ```python
 import tfmodel
 
-tfmodel.util.embed(input_csv="sample.csv", output_dir="embeddings")
+input_exps=[
+    "examples/image-embedding/img/yasuna/*.png",
+    "examples/image-embedding/img/sonya/*.png",
+]
+
+tfmodel.util.embed(
+    input_exps=input_exps,
+    output_dir="embeddings"
+)
 ```
 
 ## Result
