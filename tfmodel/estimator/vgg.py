@@ -5,7 +5,7 @@ import tfmodel
 
 
 def vgg16_model_fn(features, labels, mode, params, config=None):
-    tfmodel.vgg.build_vgg16_graph(features, trainable=False, reuse=False)
+    tfmodel.vgg.build_vgg16_graph(features["images"], trainable=False, reuse=False)
     pool5 = tf.get_default_graph().get_tensor_by_name("vgg_16/pool5:0")
     hidden = tf.contrib.layers.flatten(pool5)
     for n_unit in params["fc_units"]:
