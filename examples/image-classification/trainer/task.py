@@ -11,8 +11,8 @@ parser.add_argument("--train_csv", type=str)
 parser.add_argument("--test_csv", type=str)
 parser.add_argument("--output_path", type=str, default="outputs")
 parser.add_argument("--learning_rate", type=float, default=0.01)
-parser.add_argument("--batch_size", type=int, default=128)
-parser.add_argument("--n_classes", type=int, default=24)
+parser.add_argument("--batch_size", type=int, default=2)
+parser.add_argument("--n_classes", type=int, default=2)
 parser.add_argument("--n_epochs", type=int, default=1)
 args, unknown_args = parser.parse_known_args()
 
@@ -44,7 +44,7 @@ def build_queue(csv_file, num_epochs=None):
             batch_size=BATCH_SIZE,
             num_threads=64,
             capacity=512,
-            min_after_dequeue=128
+            min_after_dequeue=0
         )
         return image_batch, label_batch
 
@@ -73,7 +73,10 @@ def generate_csv(filenames, output, labels):
 
 
 if __name__ == "__main__":
-    run_config = tf.estimator.RunConfig()
+    tf.logging.set_verbosity(tf.logging.DEBUG)
+    run_config = tf.estimator.RunConfig().replace(
+        save_summary_steps=1,
+    )
     clf = tfmodel.estimator.VGG16Classifier(
         fc_units=[128],
         n_classes=2,
