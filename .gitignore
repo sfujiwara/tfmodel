@@ -6,5 +6,6 @@ outputs
 
 examples/sandbox/sandbox.py
 sandbox
+model
 models
 data

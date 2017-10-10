@@ -33,12 +33,13 @@ def build_queue(csv_file, num_epochs=None):
         reader = tf.TextLineReader(skip_header_lines=1)
         key, value = reader.read(filename_queue)
         img_file_path, label = tf.decode_csv(value, record_defaults=[[""], [1]])
-        image = tf.image.decode_image(tf.read_file(img_file_path), channels=3)
-        image = tf.image.resize_bicubic([image], [224, 224])[0]
-        image.set_shape([224, 224, 3])
+        image = tf.image.decode_jpeg(tf.read_file(img_file_path), channels=3)
+        assert image.get_shape().as_list() == [None, None, 3]
+        image = tf.image.resize_images(image, [224, 224], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        assert image.get_shape().as_list() == [224, 224, 3]
+        # image.set_shape([224, 224, 3])
         image = tf.cast(image, tf.float32)
-        # label = tf.to_int32(tf.string_to_number(label))
-        label = tf.one_hot(label, depth=N_CLASSES)
+        # label = tf.one_hot(label, depth=N_CLASSES)
         image_batch, label_batch = tf.train.shuffle_batch(
             [image, label],
             batch_size=BATCH_SIZE,
@@ -49,11 +50,11 @@ def build_queue(csv_file, num_epochs=None):
         return image_batch, label_batch
 
 
-def get_input_fn(csv_file, n_epoch):
+def get_input_fn(csv_file, n_class, n_epoch):
 
     def input_fn():
         image_batch, label_batch = build_queue(csv_file=csv_file, num_epochs=n_epoch)
-        return {"images": image_batch}, label_batch
+        return {"images": image_batch}, tf.one_hot(label_batch, depth=n_class)
 
     return input_fn
 
@@ -83,5 +84,5 @@ if __name__ == "__main__":
         model_dir="model",
         config=run_config
     )
-    input_fn = get_input_fn(csv_file="img/train.csv", n_epoch=5)
+    input_fn = get_input_fn(csv_file="img/train.csv", n_epoch=5, n_class=2)
     clf.train(input_fn=input_fn)

@@ -8,9 +8,10 @@ def vgg16_model_fn(features, labels, mode, params, config=None):
     tfmodel.vgg.build_vgg16_graph(features["images"], trainable=False, reuse=False)
     pool5 = tf.get_default_graph().get_tensor_by_name("vgg_16/pool5:0")
     hidden = tf.contrib.layers.flatten(pool5)
-    for n_unit in params["fc_units"]:
-        hidden = tf.layers.dense(hidden, n_unit, activation=tf.nn.relu)
-    logits = tf.layers.dense(hidden, params["n_classes"])
+    with tf.variable_scope("additional_layers"):
+        for n_unit in params["fc_units"]:
+            hidden = tf.layers.dense(hidden, n_unit, activation=tf.nn.relu)
+        logits = tf.layers.dense(hidden, params["n_classes"])
     prob = tf.nn.softmax(logits)
     loss = tf.losses.softmax_cross_entropy(onehot_labels=labels, logits=logits, label_smoothing=1e-7)
     optim = params["optimizer"]
@@ -38,7 +39,7 @@ def vgg16_model_fn(features, labels, mode, params, config=None):
 
 def train_input_fn():
     img = np.random.normal(size=[32, 224, 224, 3])
-    return tf.constant(img, dtype=tf.float32),  tf.one_hot(np.random.choice(2, 32), depth=2)
+    return tf.constant(img, dtype=tf.float32), tf.one_hot(np.random.choice(2, 32), depth=2)
 
 
 class VGG16Classifier(tf.estimator.Estimator):
