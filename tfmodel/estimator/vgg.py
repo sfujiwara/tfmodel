@@ -9,9 +9,9 @@ def vgg16_model_fn(features, labels, mode, params, config=None):
     pool5 = tf.get_default_graph().get_tensor_by_name("vgg_16/pool5:0")
     hidden = tf.contrib.layers.flatten(pool5)
     with tf.variable_scope("additional_layers"):
-        for n_unit in params["fc_units"]:
-            hidden = tf.layers.dense(hidden, n_unit, activation=tf.nn.relu)
-        logits = tf.layers.dense(hidden, params["n_classes"])
+        for i, n_unit in enumerate(params["fc_units"]):
+            hidden = tf.layers.dense(hidden, n_unit, activation=tf.nn.relu, name="fc{}".format(i))
+        logits = tf.layers.dense(hidden, params["n_classes"], name="logits")
     prob = tf.nn.softmax(logits)
     loss = tf.losses.softmax_cross_entropy(onehot_labels=labels, logits=logits, label_smoothing=1e-7)
     optim = params["optimizer"]
