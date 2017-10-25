@@ -22,6 +22,8 @@ def vgg16_model_fn(features, labels, mode, params, config=None):
         tf.logging.info("init_fn is successfully called")
         # Download weights
         save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
+        # TODO: Remove download from init_fn
+        #       since parameter server should download the checkpoint in case of distributed learning
         tfmodel.util.maybe_download_and_extract(dest_directory=save_dir, data_url=tfmodel.vgg.MODEL_URL)
         checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
         saver.restore(session, checkpoint_path)
