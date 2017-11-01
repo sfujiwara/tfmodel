@@ -8,13 +8,12 @@ def ocsvm_model_fn(features, labels, mode, params, config=None):
         stddev=params["rffm_stddev"],
         name="rffm"
     )
-    mapped_features = kernel_mapper.map(features["x"])
-    weight = tf.get_variable(
-        name="weight",
-        shape=[params["rffm_output_dim"], 1],
-        dtype=tf.float32,
-        initializer=tf.random_normal_initializer(),
-        trainable=True,
+    with tf.name_scope("feature_mapping"):
+        mapped_features = kernel_mapper.map(features["x"])
+
+    weight = tf.Variable(
+        tf.truncated_normal([params["rffm_output_dim"], 1]),
+        name="weight", dtype=tf.float32, trainable=True,
     )
     rho = tf.Variable(0, name="rho", dtype=tf.float32, trainable=True)
     tf.summary.scalar(name="rho", tensor=rho)
@@ -28,7 +27,7 @@ def ocsvm_model_fn(features, labels, mode, params, config=None):
     loss = hinge_loss + regularizer - tf.multiply(rho, params["nu"])
 
     tf.summary.scalar(name="regularizer", tensor=regularizer)
-    tf.summary.histogram(name="decisionValues", values=y)
+    tf.summary.histogram(name="decision_values", values=y)
     tf.summary.scalar(name="hinge_loss", tensor=hinge_loss)
 
     train_op = params["optimizer"].minimize(
@@ -87,7 +86,7 @@ if __name__ == "__main__":
 
     config = tf.estimator.RunConfig(
         save_summary_steps=10,
-        model_dir="output"
+        model_dir="outputs"
     )
 
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
@@ -103,7 +102,7 @@ if __name__ == "__main__":
         rffm_input_dim=2,
         rffm_output_dim=2000,
         rffm_stddev=10.,
-        optimizer=tf.train.ProximalAdagradOptimizer(1e-3),
+        optimizer=tf.train.ProximalAdagradOptimizer(1e-1),
         config=config
     )
     clf.train(input_fn=train_input_fn)
@@ -117,6 +116,11 @@ if __name__ == "__main__":
     result = np.array(list(clf.predict(predict_input_fn))).flatten()
     print(result)
 
-    # plt.plot(x[:, 0], x[:, 1], "x")
-    plt.plot(result)
+    threshold = 0.
+    ind_normal = result > threshold
+    ind_outlier = result < threshold
+    plt.plot(x[ind_normal, 0], x[ind_normal, 1], "x", label="Predicted as normal")
+    plt.plot(x[ind_outlier, 0], x[ind_outlier, 1], "x", label="Predicted as outlier")
+    plt.legend()
+    plt.grid()
     plt.show()
