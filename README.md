@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/sfujiwara/tfmodel.svg?style=svg)](https://circleci.com/gh/sfujiwara/tfmodel)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
-This module includes pre-trained models converted for [TensorFlow](https://www.tensorflow.org/).
+This module includes pre-trained models converted for [TensorFlow](https://www.tensorflow.org/) and various [Canned Estimators](https://www.tensorflow.org/programmers_guide/estimators#pre-made_estimators).
 
 ## Requirements
 
