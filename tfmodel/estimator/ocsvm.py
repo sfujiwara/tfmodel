@@ -88,6 +88,14 @@ class OneClassSVM(tf.estimator.Estimator):
 if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
+    import json
+    import os
+
+    tf_conf = {
+      "cluster": {"master": ["localhost:2222"]},
+      "task": {"index": 0, "type": "master"}
+    }
+    os.environ["TF_CONFIG"] = json.dumps(tf_conf)
 
     tf.logging.set_verbosity(tf.logging.DEBUG)
     x_train = np.random.multivariate_normal(mean=[1., 1.], cov=np.eye(2), size=100).astype(np.float32)
@@ -132,7 +140,7 @@ if __name__ == "__main__":
 
     train_spec = tf.estimator.TrainSpec(input_fn=train_input_fn, max_steps=10000)
     eval_spec = tf.estimator.EvalSpec(
-        input_fn=eval_input_fn, start_delay_secs=0, throttle_secs=5, exporters=None
+        input_fn=eval_input_fn, start_delay_secs=0, throttle_secs=1, exporters=None
     )
     tf.estimator.train_and_evaluate(estimator=clf, train_spec=train_spec, eval_spec=eval_spec)
 
