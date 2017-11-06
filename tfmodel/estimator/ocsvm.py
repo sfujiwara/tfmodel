@@ -1,7 +1,8 @@
 import tensorflow as tf
 
 
-def ocsvm_model_fn(features, labels, mode, params, config=None):
+def ocsvm_model_fn(features, labels, mode, params, config):
+    assert isinstance(features, dict)
     kernel_mapper = tf.contrib.kernel_methods.RandomFourierFeatureMapper(
         input_dim=params["rffm_input_dim"],
         output_dim=params["rffm_output_dim"],
