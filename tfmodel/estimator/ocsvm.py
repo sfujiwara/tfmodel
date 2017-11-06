@@ -3,6 +3,7 @@ import tensorflow as tf
 
 def ocsvm_model_fn(features, labels, mode, params, config):
     assert isinstance(features, dict)
+    feature_columns = params["feature_columns"]
     kernel_mapper = tf.contrib.kernel_methods.RandomFourierFeatureMapper(
         input_dim=params["rffm_input_dim"],
         output_dim=params["rffm_output_dim"],
@@ -10,7 +11,8 @@ def ocsvm_model_fn(features, labels, mode, params, config):
         name="rffm"
     )
     with tf.name_scope("feature_mapping"):
-        mapped_features = kernel_mapper.map(features["x"])
+        # mapped_features = kernel_mapper.map(features["x"])
+        mapped_features = kernel_mapper.map(tf.feature_column.input_layer(features, feature_columns))
 
     weight = tf.Variable(
         tf.truncated_normal([params["rffm_output_dim"], 1]),
@@ -63,6 +65,7 @@ class OneClassSVM(tf.estimator.Estimator):
 
     def __init__(
         self,
+        feature_columns,
         nu,
         rffm_input_dim,
         rffm_output_dim,
@@ -72,6 +75,7 @@ class OneClassSVM(tf.estimator.Estimator):
         config=None
     ):
         params = {
+            "feature_columns": feature_columns,
             "nu": nu,
             "rffm_input_dim": rffm_input_dim,
             "rffm_output_dim": rffm_output_dim,
@@ -106,7 +110,7 @@ if __name__ == "__main__":
     ])
     y_eval = np.array([1.]*950 + [-1.]*50).astype(np.float32)
 
-    # feature_columns = [tf.feature_column.numeric_column("x", shape=[2])]
+    feature_columns = [tf.feature_column.numeric_column("x", shape=[2])]
 
     config = tf.estimator.RunConfig(
         save_summary_steps=100,
@@ -131,6 +135,7 @@ if __name__ == "__main__":
     )
 
     clf = OneClassSVM(
+        feature_columns=feature_columns,
         nu=0.1,
         rffm_input_dim=2,
         rffm_output_dim=2000,
