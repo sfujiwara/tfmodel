@@ -5,6 +5,9 @@ import tfmodel
 
 
 def vgg16_model_fn(features, labels, mode, params, config=None):
+    # Download pre-trained checkpoint
+    save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
+    tfmodel.util.maybe_download_and_extract(dest_directory=save_dir, data_url=tfmodel.vgg.MODEL_URL)
     tfmodel.vgg.build_vgg16_graph(features["images"], trainable=False, reuse=False)
     pool5 = tf.get_default_graph().get_tensor_by_name("vgg_16/pool5:0")
     hidden = tf.contrib.layers.flatten(pool5)
@@ -19,12 +22,8 @@ def vgg16_model_fn(features, labels, mode, params, config=None):
     saver = tf.train.Saver(var_list=tf.get_collection(tfmodel.vgg.VGG16_GRAPH_KEY))
 
     def init_fn(scaffold, session):
-        tf.logging.info("init_fn is successfully called")
-        # Download weights
+        # Restore pre-trained checkpoint
         save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
-        # TODO: Remove download from init_fn
-        #       since parameter server should download the checkpoint in case of distributed learning
-        tfmodel.util.maybe_download_and_extract(dest_directory=save_dir, data_url=tfmodel.vgg.MODEL_URL)
         checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
         saver.restore(session, checkpoint_path)
 
