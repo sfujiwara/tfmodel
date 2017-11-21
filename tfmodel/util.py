@@ -17,7 +17,7 @@ def maybe_download_and_extract(dest_directory, data_url):
         filepath, _ = urllib.request.urlretrieve(data_url, filepath)
         statinfo = os.stat(filepath)
         tf.logging.info("Successfully downloaded {0} {1} bytes.".format(filename, statinfo.st_size))
-    tarfile.open(fileobj=filepath, mode="r").extractall(dest_directory)
+    tarfile.open(name=filepath, mode="r").extractall(dest_directory)
 
 
 def _default_resize_image_fn(img):
