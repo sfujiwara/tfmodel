@@ -1,26 +1,26 @@
 # VGG 16
 
-See [here](http://www.robots.ox.ac.uk/~vgg/research/very_deep/) for details.
+See [here](http://www.robots.ox.ac.uk/~vgg/research/very_deep/) for details of VGG 16.
 
 ## Basic Usage
 
 ```python
-import numpy as np
-import tensorflow as tf
 import tfmodel
 
-img = np.random.normal(size=[1, 224, 224, 3])
+def train_input_fn():
+    # Implement input pipeline for training data
 
-with tf.Graph().as_default() as g:
-    img_ph = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3])
-    preprocessed_img = tfmodel.vgg.preprocess(img_ph)
-    model_tf = tfmodel.vgg.Vgg16(preprocessed_img)
-    with tf.Session() as sess:
-        model_tf.restore_pretrained_variables(sess)
-        p_tf = sess.run(tf.nn.softmax(model_tf.logits), feed_dict={img_ph: img})
+clf = tfmodel.estimator.VGG16Classifier(
+    fc_units=[],
+    n_classes=2,
+    model_dir="outputs",
+    pretrained_checkpoint_dir="models"
+)
 
-print(p_tf)
+clf.train(input_fn=train_input_fn, steps=10000)
 ```
+
+If `pretrained_checkpoint_dir` is specified, pre-trained checkpoint will be automatically downloaded from [here](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models).
 
 ## License
 

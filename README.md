@@ -16,11 +16,15 @@ Other libraries in [requirement.txt](requirements.txt) are required only for uni
 pip install git+https://github.com/sfujiwara/tfmodel
 ```
 
-## Models
+## Canned Estimators
 
-### VGG 16
+### VGG 16 Classifier
 
 See [README_VGG16.md](README_VGG16.md).
+
+### One-Class SVM
+
+TODO
 
 ## Unit Test
 
