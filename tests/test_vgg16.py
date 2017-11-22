@@ -11,12 +11,12 @@ from keras.applications.vgg16 import VGG16
 import tfmodel
 
 TFMODEL_DIR = os.path.join(os.environ.get("HOME"), ".tfmodel")
-
+DEFAULT_VGG16_CHECKPOINT_PATH = os.path.join(TFMODEL_DIR, "models", "vgg_16.ckpt")
 
 class TestVgg16(unittest.TestCase):
 
     def setUp(self):
-        tfmodel.util.maybe_download_and_extract(os.path.join(TFMODEL_DIR, "vgg16"), tfmodel.vgg.MODEL_URL)
+        tfmodel.util.download_vgg16_checkpoint()
 
     def test_vgg16_with_keras(self):
         # Load sample image
@@ -27,7 +27,7 @@ class TestVgg16(unittest.TestCase):
             logits_tf = tfmodel.vgg.build_vgg16_graph(img_tensor=img_ph, include_top=True)
             saver = tf.train.Saver()
             with tf.Session() as sess:
-                saver.restore(sess=sess, save_path=os.path.join(TFMODEL_DIR, "vgg16", "vgg_16.ckpt"))
+                saver.restore(sess=sess, save_path=DEFAULT_VGG16_CHECKPOINT_PATH)
                 p_tf = sess.run(tf.nn.softmax(logits=logits_tf), feed_dict={img_ph: img})[0]
         # Try VGG 16 model included in Keras
         model = VGG16(weights="imagenet", include_top=True)
@@ -44,7 +44,7 @@ class TestVgg16(unittest.TestCase):
             saver = tf.train.Saver()
             tf.summary.FileWriter(logdir="summary/tfmodel", graph=g)
             with tf.Session() as sess:
-                saver.restore(sess=sess, save_path=os.path.join(TFMODEL_DIR, "vgg16", "vgg_16.ckpt"))
+                saver.restore(sess=sess, save_path=DEFAULT_VGG16_CHECKPOINT_PATH)
                 logits_tf = sess.run(logits_tf, feed_dict={img_ph: img})[0]
         # Try VGG 16 model included in TF-Slim
         with tf.Graph().as_default() as g:
@@ -53,6 +53,6 @@ class TestVgg16(unittest.TestCase):
             saver = tf.train.Saver()
             tf.summary.FileWriter(logdir="summary/slim", graph=g)
             with tf.Session() as sess:
-                saver.restore(sess, "{}/.tfmodel/vgg16/vgg_16.ckpt".format(os.environ["HOME"]))
+                saver.restore(sess, DEFAULT_VGG16_CHECKPOINT_PATH)
                 logits_slim = sess.run(net, feed_dict={x_ph: img})[0]
         np.testing.assert_array_almost_equal(logits_tf.flatten(), logits_slim.flatten())

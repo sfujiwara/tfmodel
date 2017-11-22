@@ -114,7 +114,7 @@ def build_total_variation_loss(img_tensor):
     return tv_loss
 
 
-tfmodel.util.maybe_download_and_extract(
+tfmodel.util.download_vgg16_checkpoint(
     dest_directory=os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16"),
     data_url=tfmodel.vgg.MODEL_URL
 )

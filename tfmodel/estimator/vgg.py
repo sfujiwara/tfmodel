@@ -7,7 +7,7 @@ import tfmodel
 def vgg16_model_fn(features, labels, mode, params, config=None):
     # Download pre-trained checkpoint
     save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
-    tfmodel.util.maybe_download_and_extract(dest_directory=save_dir, data_url=tfmodel.vgg.MODEL_URL)
+    tfmodel.util.download_vgg16_checkpoint(dest_directory=save_dir)
     tfmodel.vgg.build_vgg16_graph(features["images"], trainable=False, reuse=False)
     pool5 = tf.get_default_graph().get_tensor_by_name("vgg_16/pool5:0")
     hidden = tf.contrib.layers.flatten(pool5)
@@ -22,7 +22,7 @@ def vgg16_model_fn(features, labels, mode, params, config=None):
     saver = tf.train.Saver(var_list=tf.get_collection(tfmodel.vgg.VGG16_GRAPH_KEY))
 
     def init_fn(scaffold, session):
-        # Restore pre-trained checkpoint
+        tfmodel.util.download_vgg16_checkpoint(params["pretrained_checkpoint_dir"])
         save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
         checkpoint_path = os.path.join(save_dir, "vgg_16.ckpt")
         saver.restore(session, checkpoint_path)
@@ -51,7 +51,8 @@ class VGG16Classifier(tf.estimator.Estimator):
         n_classes,
         optimizer=tf.train.ProximalAdagradOptimizer(1e-2),
         model_dir=None,
-        config=None
+        config=None,
+        pretrained_checkpoint_dir=".tfmodel"
     ):
         params = {
             "fc_units": fc_units,

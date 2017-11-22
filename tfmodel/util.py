@@ -3,21 +3,33 @@
 import os
 import tarfile
 from six.moves import urllib
+import tempfile
 import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
 import vgg
 
 
-def maybe_download_and_extract(dest_directory, data_url):
-    if not os.path.exists(dest_directory):
-        os.makedirs(dest_directory)
-    filename = data_url.split("/")[-1]
-    filepath = os.path.join(dest_directory, filename)
-    if not os.path.exists(filepath):
-        filepath, _ = urllib.request.urlretrieve(data_url, filepath)
-        statinfo = os.stat(filepath)
-        tf.logging.info("Successfully downloaded {0} {1} bytes.".format(filename, statinfo.st_size))
-    tarfile.open(name=filepath, mode="r").extractall(dest_directory)
+def download_vgg16_checkpoint(
+        dest_directory=os.path.join(os.environ.get("HOME"), ".tfmodel", "models")
+):
+    data_url = "http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz"
+    dest_file = os.path.join(dest_directory, "vgg_16.ckpt")
+    if tf.gfile.Exists(dest_file):
+        tf.logging.info("{} already exists".format(dest_file))
+    else:
+        tarfile_path = os.path.join(tempfile.tempdir, os.path.basename(data_url))
+        if tf.gfile.Exists(tarfile_path):
+            tf.logging.info("{} already exists".format(tarfile_path))
+        else:
+            tf.logging.info("downloading vgg16 checkpoint from {}".format(data_url))
+            urllib.request.urlretrieve(data_url, filename=tarfile_path)
+        tf.logging.info("extracting {}".format(tarfile_path))
+        x = tarfile.open(name=tarfile_path, mode="r")
+        fileobj = x.extractfile(x.getmembers()[0].name)
+        tf.logging.info("saving vgg16 checkpoint to {}".format(dest_file))
+        tf.gfile.MakeDirs(dest_directory)
+        with tf.gfile.Open(dest_file, "w") as f:
+            f.write(fileobj.read())
 
 
 def _default_resize_image_fn(img):
@@ -51,7 +63,7 @@ def embed(input_exps, output_dir, resize_image_fn=_default_resize_image_fn):
         with tf.Session() as sess:
             sess.run(init_op)
             save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
-            maybe_download_and_extract(save_dir, vgg.MODEL_URL)
+            download_vgg16_checkpoint(save_dir, vgg.MODEL_URL)
             vgg16_saver.restore(sess, os.path.join(save_dir, "vgg_16.ckpt"))
             features_array = sess.run(features)
             print features_array
