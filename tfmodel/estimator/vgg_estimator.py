@@ -8,7 +8,6 @@ def vgg16_model_fn(features, labels, mode, params, config=None):
         xs = features[features.keys()[0]]
     else:
         xs = features
-    import IPython;IPython.embed()
     tfmodel.vgg.build_vgg16_graph(xs, trainable=False, reuse=False)
     pool5 = tf.get_default_graph().get_tensor_by_name("vgg_16/pool5:0")
     hidden = tf.contrib.layers.flatten(pool5)
