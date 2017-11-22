@@ -9,6 +9,9 @@ import tfmodel
 
 def train_input_fn():
     # Implement input pipeline for training data
+    # x must be a dict or Tensor with shape [batch_size, height, width]
+    # y must be a one-hot Tensor with shape [batch_size, n_classes]
+    return {"images": xs}, ys
 
 clf = tfmodel.estimator.VGG16Classifier(
     fc_units=[],
