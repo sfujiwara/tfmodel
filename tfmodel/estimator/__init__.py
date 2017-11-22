@@ -1,2 +1,2 @@
-from vgg import VGG16Classifier
-from ocsvm import OneClassSVM
+from vgg_estimator import VGG16Classifier
+from ocsvm_estimator import OneClassSVM
