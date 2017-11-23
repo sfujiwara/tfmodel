@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
 import os
 import tarfile
 from six.moves import urllib
@@ -14,11 +15,12 @@ def download_vgg16_checkpoint(
 ):
     data_url = "http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz"
     dest_file = os.path.join(dest_directory, "vgg_16.ckpt")
-    if tf.gfile.Exists(dest_file):
+    if tf.gfile.Exists(dest_file) and _verify_vgg16_checkpoint_hash(dest_file):
         tf.logging.info("{} already exists".format(dest_file))
     else:
         tarfile_path = os.path.join(tempfile.tempdir, os.path.basename(data_url))
-        if tf.gfile.Exists(tarfile_path):
+        if tf.gfile.Exists(tarfile_path) and _verify_vgg16_tar_hash(tarfile_path):
+
             tf.logging.info("{} already exists".format(tarfile_path))
         else:
             tf.logging.info("downloading vgg16 checkpoint from {}".format(data_url))
@@ -30,6 +32,18 @@ def download_vgg16_checkpoint(
         tf.gfile.MakeDirs(dest_directory)
         with tf.gfile.Open(dest_file, "w") as f:
             f.write(fileobj.read())
+
+
+def _verify_vgg16_checkpoint_hash(checkpoint_path):
+    with tf.gfile.Open(checkpoint_path) as f:
+        is_valid = hashlib.md5(f.read()).hexdigest() == "c69996ee68fbd93d810407da7b3c0242"
+    return is_valid
+
+
+def _verify_vgg16_tar_hash(tar_path):
+    with tf.gfile.Open(tar_path) as f:
+        is_valid = hashlib.md5(f.read()).hexdigest() == "520bc6e4c73a89b5c0d8b9c4eaa8861f"
+    return is_valid
 
 
 def _default_resize_image_fn(img):
