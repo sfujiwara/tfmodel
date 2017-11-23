@@ -9,7 +9,7 @@ import tfmodel
 
 def train_input_fn():
     # Implement input pipeline for training data
-    # x must be a dict or Tensor with shape [batch_size, height, width]
+    # x must be a dict or a Tensor with shape [batch_size, height, width, 3]
     # y must be a one-hot Tensor with shape [batch_size, n_classes]
     return {"images": xs}, ys
 
