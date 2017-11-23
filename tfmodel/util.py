@@ -57,6 +57,7 @@ def _default_resize_image_fn(img):
 
 
 def embed(input_exps, output_dir, resize_image_fn=_default_resize_image_fn):
+    save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel")
     metadata = [["file", "label"]]
     images = []
     with tf.Graph().as_default() as g:
@@ -76,8 +77,7 @@ def embed(input_exps, output_dir, resize_image_fn=_default_resize_image_fn):
         vgg16_saver = tf.train.Saver(tf.get_collection(vgg.VGG16_GRAPH_KEY))
         with tf.Session() as sess:
             sess.run(init_op)
-            save_dir = os.path.join(os.environ.get("HOME", ""), ".tfmodel", "vgg16")
-            download_vgg16_checkpoint(save_dir, vgg.MODEL_URL)
+            download_vgg16_checkpoint(save_dir)
             vgg16_saver.restore(sess, os.path.join(save_dir, "vgg_16.ckpt"))
             features_array = sess.run(features)
             print features_array
