@@ -24,7 +24,7 @@ See [README_VGG16.md](README_VGG16.md).
 
 ### One-Class SVM
 
-TODO
+See [README_OCSVM.md](README_OCSVM.md).
 
 ## Unit Test
 

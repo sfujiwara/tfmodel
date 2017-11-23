@@ -25,6 +25,10 @@ clf.train(input_fn=train_input_fn, steps=10000)
 
 If `pretrained_checkpoint_dir` is specified, pre-trained checkpoint will be automatically downloaded from [here](https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models).
 
+## Practical Sample Code
+
+TODO
+
 ## License
 
 The pre-trained model is released under [Creative Commons Attribution License](https://creativecommons.org/licenses/by/4.0/).
