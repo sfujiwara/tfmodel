@@ -7,7 +7,7 @@ from six.moves import urllib
 import tempfile
 import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
-import vgg
+from . import vgg
 
 
 def download_vgg16_checkpoint(
@@ -62,11 +62,8 @@ def embed(input_exps, output_dir, resize_image_fn=_default_resize_image_fn):
     images = []
     with tf.Graph().as_default() as g:
         for i, exp in enumerate(input_exps):
-            print i, exp
             file_list = tf.gfile.Glob(exp)
-            print file_list
             for f in file_list:
-                print f
                 img = tf.image.decode_jpeg(tf.read_file(f), channels=3)
                 img = resize_image_fn(img)
                 metadata.append([f, str(i)])
@@ -80,7 +77,6 @@ def embed(input_exps, output_dir, resize_image_fn=_default_resize_image_fn):
             download_vgg16_checkpoint(save_dir)
             vgg16_saver.restore(sess, os.path.join(save_dir, "vgg_16.ckpt"))
             features_array = sess.run(features)
-            print features_array
     with tf.Graph().as_default() as g:
         img_var = tf.Variable(features_array, name="images")
         saver = tf.train.Saver(var_list=[img_var])

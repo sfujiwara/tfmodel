@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
-import vgg
-import estimator
-import util
+from . import vgg
+from . import estimator
+from . import util
 
 
 __author__ = "Shuhei Fujiwara"
