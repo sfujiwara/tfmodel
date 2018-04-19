@@ -3,6 +3,33 @@ import tensorflow as tf
 import tfmodel
 
 
+def metric_fn(labels, logits):
+    n_classes = logits.shape[1].value
+    n_classes = min(n_classes, 10)
+    with tf.name_scope("metrics_accuracy"):
+        eval_metric_ops = {
+            "accuracy": tf.metrics.accuracy(labels=tf.argmax(labels, 1), predictions=tf.argmax(logits, 1)),
+            "mean_par_accuracy": tf.metrics.mean_per_class_accuracy(
+                labels=tf.argmax(labels, 1), predictions=tf.argmax(logits, 1), num_classes=n_classes
+            ),
+        }
+    # Add recalls of each classes to eval metrics
+    with tf.name_scope("metrics_recall"):
+        for k in [1, 3]:
+            for i in range(n_classes):
+                eval_metric_ops["recall_at_{}/class_{}".format(k, i)] = tf.metrics.recall_at_k(
+                    labels=tf.argmax(labels, 1), predictions=logits, k=k, class_id=i
+                )
+    # Add precisions of each classes to eval metrics
+    with tf.name_scope("metrics_precision"):
+        for k in [1]:
+            for i in range(n_classes):
+                eval_metric_ops["precision_at_{}/class_{}".format(k, i)] = tf.metrics.sparse_precision_at_k(
+                    labels=tf.argmax(labels, 1), predictions=logits, k=k, class_id=i
+                )
+    return eval_metric_ops
+
+
 def vgg16_model_fn(features, labels, mode, params, config=None):
     if isinstance(features, dict):
         xs = features[list(features.keys())[0]]
@@ -25,6 +52,7 @@ def vgg16_model_fn(features, labels, mode, params, config=None):
         predictions=prob,
         loss=loss,
         train_op=train_op,
+        eval_metric_ops=metric_fn(labels=labels, logits=logits)
     )
     return estimator_spec
 
@@ -76,6 +104,7 @@ def vgg16_tpu_model_fn(features, labels, mode, params, config=None):
         predictions={"probabilities": prob},
         loss=loss,
         train_op=train_op,
+        metric_fn=(metric_fn, [labels, logits])
     )
     return estimator_spec
 

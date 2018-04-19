@@ -18,7 +18,7 @@ def main():
         fc_units=[],
         n_classes=1000,
         optimizer=tf.train.GradientDescentOptimizer(1e-2),
-        model_dir="model",
+        model_dir="outputs",
         config=None,
         warm_start_from=warm_start_settings,
     )
