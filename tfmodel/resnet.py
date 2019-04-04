@@ -5,7 +5,7 @@ import tensorflow as tf
 RESNET50_GRAPH_KEY = 'resnet50'
 
 
-def resnet_conv2d(inputs, filters, kernel_size, strides, trainable):
+def resnet_conv2d(inputs, filters, kernel_size, strides, trainable, activation=tf.nn.relu):
     n_kernels = inputs.get_shape()[3].value
     w = tf.get_variable(
         name='weights',
@@ -25,7 +25,8 @@ def resnet_conv2d(inputs, filters, kernel_size, strides, trainable):
     )
     h = tf.nn.conv2d(inputs, w, strides=[1, strides, strides, 1], padding='SAME')
     h = tf.nn.bias_add(h, b)
-    h = tf.nn.relu(h)
+    if activation is not None:
+        h = activation(h)
     return h
 
 
